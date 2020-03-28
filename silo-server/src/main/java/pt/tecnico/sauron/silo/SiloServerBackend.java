@@ -1,7 +1,7 @@
 package pt.tecnico.sauron.silo;
 
 import pt.tecnico.sauron.silo.domain.Camera;
-import pt.tecnico.sauron.silo.grpc.Observation;
+import pt.tecnico.sauron.silo.domain.ObservationDomain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +14,10 @@ public class SiloServerBackend {
 
     }
 
-    public void report(String cameraName, List<Observation> newObservations) {
+    public void report(String cameraName, List<ObservationDomain> newObservations) {
         List<Camera> filteredCameras = cameras.stream()
-                            .filter(x -> x.getName().equals(cameraName))
-                            .collect(Collectors.toList());
+                .filter(x -> x.getName().equals(cameraName))
+                .collect(Collectors.toList());
 
         if (filteredCameras.size() == 1)
             filteredCameras.get(0).getObservations().addAll(newObservations);
