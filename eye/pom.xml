@@ -22,6 +22,18 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>pt.tecnico.sauron.CXX</groupId>
+			<artifactId>silo-contract</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>pt.tecnico.sauron.CXX</groupId>
+			<artifactId>silo-client</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

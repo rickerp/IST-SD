@@ -6,6 +6,24 @@ package pt.tecnico.sauron.silo.grpc;
 
 option java_multiple_files = true;
 
+enum Object {
+    CAR = 0;
+    PERSON = 1;
+}
+
+message Observation {
+    Object object = 1;
+    string id = 2;
+}
+
+message ReportRequest {
+    repeated Observation observations = 1;
+}
+
+message ReportResponse {
+
+}
+
 message PingRequest {
     // TODO: Time of request
 }
@@ -23,6 +41,7 @@ message ClearResponse {
 }
 
 service Silo {
+    rpc report(ReportRequest) returns(ReportResponse);
     rpc ctrl_clear(ClearRequest) returns(ClearResponse);
     rpc ctrl_ping(PingRequest) returns(PingResponse);
 }

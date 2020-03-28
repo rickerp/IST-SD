@@ -20,4 +20,12 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
+        ReportResponse response = ReportResponse.getDefaultInstance();
+        System.out.print(request.getObservationsCount());
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 }
