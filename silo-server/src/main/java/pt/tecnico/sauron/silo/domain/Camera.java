@@ -1,9 +1,13 @@
 package pt.tecnico.sauron.silo.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Camera {
-    public String name;
-    public float latitude;
-    public float longitude;
+    private List<ObservationDomain> observations = new ArrayList<>();
+    private String name;
+    private float latitude;
+    private float longitude;
 
     public Camera(String name, float latitude, float longitude){
         this.name = name;
@@ -33,6 +37,10 @@ public class Camera {
 
     public void setLongitude(float longitude) {
         this.longitude = longitude;
+    }
+
+    public List<ObservationDomain> getObservations() {
+        return observations;
     }
 
 }

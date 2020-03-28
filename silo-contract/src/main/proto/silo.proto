@@ -38,7 +38,7 @@ message ReportRequest {
 }
 
 message ReportResponse {
-
+    bool success = 1;
 }
 
 message CamJoinRequest {

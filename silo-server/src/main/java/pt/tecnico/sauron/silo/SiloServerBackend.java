@@ -1,19 +1,26 @@
 package pt.tecnico.sauron.silo;
 
 import pt.tecnico.sauron.silo.domain.Camera;
-import pt.tecnico.sauron.silo.grpc.Observation;
-import pt.tecnico.sauron.silo.grpc.ReportRequest;
+import pt.tecnico.sauron.silo.domain.ObservationDomain;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
 
 public class SiloServerBackend {
-    private List<Observation> observations = new ArrayList<>();
     private List<Camera> cameras = new ArrayList<>();
 
     public SiloServerBackend() {
 
+    }
+
+    public boolean report(String cameraName, List<ObservationDomain> newObservations) {
+        Camera camera = getCamera(cameraName);
+        if (camera == null) {
+            return false;
+        }
+        camera.getObservations().addAll(newObservations);
+        return true;
     }
 
     public Camera getCamera(String cameraName) {
@@ -27,11 +34,5 @@ public class SiloServerBackend {
         }
         cameras.add(new Camera(name, latitude, longitude));
         return true;
-    }
-
-    public void report(String camera, List<Observation> newObservations) {
-        if (cameras.stream().map(x -> x.getName()).anyMatch(x -> x.equals(camera))){
-            observations.addAll(newObservations);
-        }
     }
 }
