@@ -34,9 +34,13 @@ public class SiloIT extends BaseIT {
 	// tests 
 	
 	@Test
-	public void test() {
-		
-		
+	public void testPing() {
+		client.ping();
+	}
+
+	@Test
+	public void testClear() {
+		client.clear();
 	}
 
 }

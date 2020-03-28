@@ -4,3 +4,25 @@
 syntax = "proto3";
 package pt.tecnico.sauron.silo.grpc;
 
+option java_multiple_files = true;
+
+message PingRequest {
+    // TODO: Time of request
+}
+
+message PingResponse {
+
+}
+
+message ClearRequest {
+
+}
+
+message ClearResponse {
+
+}
+
+service Silo {
+    rpc ctrl_clear(ClearRequest) returns(ClearResponse);
+    rpc ctrl_ping(PingRequest) returns(PingResponse);
+}
