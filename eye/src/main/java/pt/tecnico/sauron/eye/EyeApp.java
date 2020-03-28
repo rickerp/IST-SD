@@ -1,6 +1,7 @@
 package pt.tecnico.sauron.eye;
 
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
+import pt.tecnico.sauron.silo.grpc.CamJoinRequest;
 import pt.tecnico.sauron.silo.grpc.Observation;
 import pt.tecnico.sauron.silo.grpc.ReportRequest;
 import pt.tecnico.sauron.silo.grpc.Target;
@@ -34,6 +35,15 @@ public class EyeApp {
 		final float longitude = Float.parseFloat(args[4]);
 
 		SiloClientFrontend client = new SiloClientFrontend(host, port);
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLatitude(latitude)
+						.setLongitude(longitude)
+						.build()
+		);
+
 		Scanner scanner = new Scanner(System.in);
 		List<Observation> observations = new ArrayList<Observation>();
 
