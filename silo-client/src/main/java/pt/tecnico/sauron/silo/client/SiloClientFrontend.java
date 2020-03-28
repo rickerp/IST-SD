@@ -23,5 +23,9 @@ public class SiloClientFrontend {
         ClearResponse response = stub.ctrlClear(ClearRequest.getDefaultInstance());
     }
 
+    public void report(ReportRequest reportRequest) {
+        stub.report(reportRequest);
+    }
+
 }
 

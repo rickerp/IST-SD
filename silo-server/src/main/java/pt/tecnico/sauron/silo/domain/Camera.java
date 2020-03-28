@@ -1,6 +1,6 @@
 package pt.tecnico.sauron.silo.domain;
 
-import pt.tecnico.sauron.silo.grpc.ReportRequest;
+import pt.tecnico.sauron.silo.grpc.Observation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,9 +9,9 @@ public class Camera {
     private String name;
     private int latitude;
     private int longitude;
-    private List<ReportRequest.Observation> observations = new ArrayList<>();
+    private List<Observation> observations = new ArrayList<>();
 
-    public Camera(String name, int latitude, int longitude){
+    public Camera(String name, int latitude, int longitude) {
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -41,7 +41,7 @@ public class Camera {
         this.longitude = longitude;
     }
 
-    public List<ReportRequest.Observation> getObservations() {
+    public List<Observation> getObservations() {
         return observations;
     }
 

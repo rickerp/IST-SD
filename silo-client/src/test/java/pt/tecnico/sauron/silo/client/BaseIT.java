@@ -24,6 +24,7 @@ public class BaseIT {
 
 			String host = testProps.getProperty("server.host");
 			int port = Integer.parseInt(testProps.getProperty("server.port"));
+
 			client = new SiloClientFrontend(host, port);
 
 		} catch (IOException e) {

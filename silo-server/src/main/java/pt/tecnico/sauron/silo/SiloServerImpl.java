@@ -3,8 +3,6 @@ package pt.tecnico.sauron.silo;
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.sauron.silo.grpc.*;
 
-import java.util.ArrayList;
-
 public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     private SiloServerBackend serverBackend = new SiloServerBackend();

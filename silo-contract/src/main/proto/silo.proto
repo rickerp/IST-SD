@@ -6,6 +6,11 @@ package pt.tecnico.sauron.silo.grpc;
 
 option java_multiple_files = true;
 
+enum Target {
+    CAR = 0;
+    PERSON = 1;
+}
+
 message PingRequest {
     // TODO: Time of request
 }
@@ -22,12 +27,12 @@ message ClearResponse {
 
 }
 
-message ReportRequest {
-    message Observation {
-        string type = 1;
-        string id = 2;
-    }
+message Observation {
+    Target target  = 1;
+    string id = 2;
+}
 
+message ReportRequest {
     string camera_name = 1;
     repeated Observation observations = 2;
 }
