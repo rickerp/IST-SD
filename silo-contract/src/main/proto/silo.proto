@@ -22,7 +22,22 @@ message ClearResponse {
 
 }
 
+message ReportRequest {
+    message Observation {
+        string type = 1;
+        string id = 2;
+    }
+
+    string camera_name = 1;
+    repeated Observation observations = 2;
+}
+
+message ReportResponse {
+
+}
+
 service Silo {
     rpc ctrl_clear(ClearRequest) returns(ClearResponse);
     rpc ctrl_ping(PingRequest) returns(PingResponse);
+    rpc report(ReportRequest) returns(ReportResponse);
 }
