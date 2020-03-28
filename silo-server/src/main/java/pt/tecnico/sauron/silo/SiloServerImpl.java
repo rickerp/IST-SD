@@ -2,6 +2,7 @@ package pt.tecnico.sauron.silo;
 
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.sauron.silo.domain.ObservationDomain;
+import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.grpc.*;
 
 import java.sql.Timestamp;
@@ -44,9 +45,30 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     }
 
     @Override
+    public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
+        boolean joined = serverBackend.camJoin(request.getCameraName(), request.getLatitude(), request.getLongitude());
+        CamJoinResponse response = CamJoinResponse.newBuilder()
+                .setSuccess(joined)
+                .build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
+        Camera camera = serverBackend.getCamera(request.getCameraName());
+        CamInfoResponse response = CamInfoResponse.newBuilder()
+                .setLatitude(camera.getLatitude())
+                .setLongitude(camera.getLongitude())
+                .build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
-        serverBackend.report(request.getCameraName(), request.getObservationsList().stream().map(this::toObservationDomain).collect(Collectors.toList()));
-        ReportResponse response = ReportResponse.newBuilder().build();
+        boolean success = serverBackend.report(request.getCameraName(), request.getObservationsList().stream().map(this::toObservationDomain).collect(Collectors.toList()));
+        ReportResponse response = ReportResponse.newBuilder().setSuccess(success).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

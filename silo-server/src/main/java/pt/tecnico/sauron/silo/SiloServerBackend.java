@@ -5,7 +5,7 @@ import pt.tecnico.sauron.silo.domain.ObservationDomain;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 public class SiloServerBackend {
     private List<Camera> cameras = new ArrayList<>();
@@ -14,13 +14,25 @@ public class SiloServerBackend {
 
     }
 
-    public void report(String cameraName, List<ObservationDomain> newObservations) {
-        List<Camera> filteredCameras = cameras.stream()
-                .filter(x -> x.getName().equals(cameraName))
-                .collect(Collectors.toList());
+    public boolean report(String cameraName, List<ObservationDomain> newObservations) {
+        Camera camera = getCamera(cameraName);
+        if (camera == null) {
+            return false;
+        }
+        camera.getObservations().addAll(newObservations);
+        return true;
+    }
 
-        if (filteredCameras.size() == 1)
-            filteredCameras.get(0).getObservations().addAll(newObservations);
+    public Camera getCamera(String cameraName) {
+        return cameras.stream().filter(x -> x.getName().equals(cameraName)).findFirst().orElse(null);
+    }
 
+    public boolean camJoin(String name, float latitude, float longitude) {
+        System.out.println("joining " + name);
+        if (getCamera(name) != null) {
+            return false;
+        }
+        cameras.add(new Camera(name, latitude, longitude));
+        return true;
     }
 }

@@ -38,10 +38,31 @@ message ReportRequest {
 }
 
 message ReportResponse {
-
+    bool success = 1;
 }
 
+message CamJoinRequest {
+    string camera_name = 1;
+    float latitude = 2;
+    float longitude = 3;
+}
+
+message CamJoinResponse {
+    bool success = 1;
+}
+
+message CamInfoRequest {
+    string camera_name = 1;
+};
+
+message CamInfoResponse {
+    float latitude = 1;
+    float longitude = 3;
+};
+
 service Silo {
+    rpc cam_info(CamInfoRequest) returns(CamInfoResponse);
+    rpc cam_join(CamJoinRequest) returns(CamJoinResponse);
     rpc ctrl_clear(ClearRequest) returns(ClearResponse);
     rpc ctrl_ping(PingRequest) returns(PingResponse);
     rpc report(ReportRequest) returns(ReportResponse);

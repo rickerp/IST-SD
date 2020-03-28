@@ -4,22 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Camera {
-    private String name;
-    private int latitude;
-    private int longitude;
     private List<ObservationDomain> observations = new ArrayList<>();
+    private String name;
+    private float latitude;
+    private float longitude;
 
-    public Camera(String name, int latitude, int longitude) {
+    public Camera(String name, float latitude, float longitude){
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
     }
 
-    public int getLatitude() {
+    public float getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(int latitude) {
+    public void setLatitude(float latitude) {
         this.latitude = latitude;
     }
 
@@ -31,11 +31,11 @@ public class Camera {
         this.name = name;
     }
 
-    public int getLongitude() {
+    public float getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(int longitude) {
+    public void setLongitude(float longitude) {
         this.longitude = longitude;
     }
 

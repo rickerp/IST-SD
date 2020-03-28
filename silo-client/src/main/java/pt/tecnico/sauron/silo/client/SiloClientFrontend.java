@@ -23,8 +23,16 @@ public class SiloClientFrontend {
         ClearResponse response = stub.ctrlClear(ClearRequest.getDefaultInstance());
     }
 
-    public void report(ReportRequest reportRequest) {
-        stub.report(reportRequest);
+    public ReportResponse report(ReportRequest reportRequest) {
+        return stub.report(reportRequest);
+    }
+
+    public CamJoinResponse camJoin(CamJoinRequest camJoinRequest) {
+        return stub.camJoin(camJoinRequest);
+    }
+
+    public CamInfoResponse camInfo(CamInfoRequest camInfoRequest) {
+        return stub.camInfo(camInfoRequest);
     }
 
 }
