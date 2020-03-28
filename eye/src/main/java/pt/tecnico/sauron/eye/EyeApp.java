@@ -1,9 +1,9 @@
 package pt.tecnico.sauron.eye;
 
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
-import pt.tecnico.sauron.silo.grpc.Object;
 import pt.tecnico.sauron.silo.grpc.Observation;
 import pt.tecnico.sauron.silo.grpc.ReportRequest;
+import pt.tecnico.sauron.silo.grpc.Target;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +43,7 @@ public class EyeApp {
 
 			if (line.isEmpty() || !scanner.hasNextLine()) {
 				ReportRequest reportRequest = ReportRequest.newBuilder()
+						.setCameraName(cameraName)
 						.addAllObservations(observations).build();
 				client.report(reportRequest);
 				observations.clear();
@@ -62,9 +63,9 @@ public class EyeApp {
 			Observation.Builder observationBuilder = Observation.newBuilder().setId(tokens[1]);
 
 			if (tokens[0].equals("person")) {
-				observationBuilder.setObject(Object.PERSON);
+				observationBuilder.setTarget(Target.PERSON);
 			} else if (tokens[1].equals("car")) {
-				observationBuilder.setObject(Object.CAR);
+				observationBuilder.setTarget(Target.CAR);
 			}
 
 			observations.add(observationBuilder.build());

@@ -23,8 +23,8 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     @Override
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
-        ReportResponse response = ReportResponse.getDefaultInstance();
-        System.out.print(request.getObservationsCount());
+        serverBackend.report(request.getCameraName(), request.getObservationsList());
+        ReportResponse response = ReportResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

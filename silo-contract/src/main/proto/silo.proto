@@ -6,22 +6,9 @@ package pt.tecnico.sauron.silo.grpc;
 
 option java_multiple_files = true;
 
-enum Object {
+enum Target {
     CAR = 0;
     PERSON = 1;
-}
-
-message Observation {
-    Object object = 1;
-    string id = 2;
-}
-
-message ReportRequest {
-    repeated Observation observations = 1;
-}
-
-message ReportResponse {
-
 }
 
 message PingRequest {
@@ -40,8 +27,22 @@ message ClearResponse {
 
 }
 
+message Observation {
+    Target target  = 1;
+    string id = 2;
+}
+
+message ReportRequest {
+    string camera_name = 1;
+    repeated Observation observations = 2;
+}
+
+message ReportResponse {
+
+}
+
 service Silo {
-    rpc report(ReportRequest) returns(ReportResponse);
     rpc ctrl_clear(ClearRequest) returns(ClearResponse);
     rpc ctrl_ping(PingRequest) returns(PingResponse);
+    rpc report(ReportRequest) returns(ReportResponse);
 }
