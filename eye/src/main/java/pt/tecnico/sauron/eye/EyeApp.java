@@ -42,11 +42,13 @@ public class EyeApp {
 			String line = scanner.nextLine().strip();
 
 			if (line.isEmpty() || !scanner.hasNextLine()) {
-				ReportRequest reportRequest = ReportRequest.newBuilder()
-						.setCameraName(cameraName)
-						.addAllObservations(observations).build();
-				client.report(reportRequest);
-				observations.clear();
+				if (!observations.isEmpty()) {
+					ReportRequest reportRequest = ReportRequest.newBuilder()
+							.setCameraName(cameraName)
+							.addAllObservations(observations).build();
+					client.report(reportRequest);
+					observations.clear();
+				}
 				continue;
 			}
 
