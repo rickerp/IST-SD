@@ -39,6 +39,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     @Override
     public void ctrlClear(ClearRequest request, StreamObserver<ClearResponse> responseObserver) {
+        serverBackend.clear();
         ClearResponse response = ClearResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();

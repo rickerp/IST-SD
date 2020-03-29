@@ -6,7 +6,7 @@
 	<!-- Please replace 'CXX' below with your C (campus) with A (Alameda) / 
 		T (Tagus); and your group number with two digits. Then delete this comment. -->
 	<parent>
-		<groupId>pt.tecnico.sauron.CXX</groupId>
+		<groupId>pt.tecnico.sauron.T19</groupId>
 		<artifactId>Sauron</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
@@ -23,13 +23,13 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>pt.tecnico.sauron.CXX</groupId>
+			<groupId>pt.tecnico.sauron.T19</groupId>
 			<artifactId>silo-contract</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>pt.tecnico.sauron.CXX</groupId>
+			<groupId>pt.tecnico.sauron.T19</groupId>
 			<artifactId>silo-client</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 			<scope>compile</scope>
