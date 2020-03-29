@@ -40,6 +40,10 @@ public class SiloClientFrontend {
         return stub.track(trackRequest);
     }
 
+    public TrackMatchResponse spotMatch(TrackRequest trackRequest){
+        return stub.trackMatch(trackRequest);
+    }
+
     public void end() {
         channel.shutdown();
     }
