@@ -1,11 +1,14 @@
 package pt.tecnico.sauron.silo.client;
 
 import io.grpc.StatusRuntimeException;
+import jdk.jshell.Snippet;
+import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import pt.tecnico.sauron.silo.grpc.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -135,6 +138,61 @@ public class SiloIT extends BaseIT {
 					ReportRequest.newBuilder()
 							.setCameraName(cameraName)
 							.addAllObservations(new ArrayList<>())
+							.build()
+			);
+		});
+	}
+
+	@Test
+	public void reportCarShouldSucceed() {
+		final String plate = "AA55BB";
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLatitude(0)
+						.setLongitude(0)
+						.build()
+		);
+
+		Assertions.assertDoesNotThrow(() -> {
+			client.report(
+					ReportRequest.newBuilder()
+					.setCameraName(cameraName)
+					.addObservations(
+							Observation.newBuilder()
+							.setTarget(Target.CAR)
+							.setId(plate)
+							.build()
+					)
+					.build()
+			);
+		});
+	}
+
+	@Test
+	public void reportCarShouldFailWithInvalidPlate() {
+		final String plate = "a";
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLatitude(0)
+						.setLongitude(0)
+						.build()
+		);
+
+		Assertions.assertThrows(StatusRuntimeException.class, () -> {
+			client.report(
+					ReportRequest
+							.newBuilder()
+							.setCameraName(cameraName)
+							.addObservations(
+									Observation.newBuilder()
+											.setTarget(Target.CAR)
+											.setId(plate)
+											.build()
+							)
 							.build()
 			);
 		});
