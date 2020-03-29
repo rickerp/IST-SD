@@ -50,4 +50,11 @@ public class Camera {
                 .collect(Collectors.toList());
     }
 
+    public List<String> getIds(ObservationDomain.Target target, String idLike) {
+        return this.observations.stream()
+                        .filter(s -> s.getTarget() == target && s.getId().matches(idLike.replace("*", ".*")))
+                        .map(obs -> obs.getId())
+                        .distinct()
+                        .collect(Collectors.toList());
+    }
 }

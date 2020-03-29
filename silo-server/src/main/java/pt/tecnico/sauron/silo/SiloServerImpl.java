@@ -7,6 +7,7 @@ import pt.tecnico.sauron.silo.grpc.*;
 
 import java.sql.Timestamp;
 import java.util.stream.Collectors;
+import java.util.List;
 
 public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
@@ -100,8 +101,16 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     @Override
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
-        Observation observation = toObservation(serverBackend.track(toTargetDomain(request.getTarget()) , request.getId()));
+        Observation observation = toObservation(serverBackend.track(toTargetDomain(request.getTarget()), request.getId()));
         TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void trackMatch(TrackRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
+        List<Observation> observations = serverBackend.trackMatch(toTargetDomain(request.getTarget()), request.getId()).stream().map(this::toObservation).collect(Collectors.toList());
+        TrackMatchResponse response = TrackMatchResponse.newBuilder().addAllObservations(observations).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

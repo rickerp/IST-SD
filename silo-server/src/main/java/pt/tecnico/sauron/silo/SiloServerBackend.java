@@ -5,6 +5,7 @@ import pt.tecnico.sauron.silo.domain.ObservationDomain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SiloServerBackend {
     private List<Camera> cameras = new ArrayList<>();
@@ -47,4 +48,15 @@ public class SiloServerBackend {
                     .findFirst()
                     .orElse(null) ;
     }
+
+    public List<ObservationDomain> trackMatch(ObservationDomain.Target target, String idLike) {
+        return cameras.stream()
+                        .map(cam -> cam.getIds(target, idLike))
+                        .flatMap(List::stream)
+                        .distinct()
+                        .map(id -> track(target, id))
+                        .collect(Collectors.toList());
+                    
+    }
+    
 }
