@@ -60,10 +60,20 @@ message CamInfoResponse {
     float longitude = 3;
 };
 
+message TrackRequest {
+    Target target = 1;
+    String id = 2;
+}
+
+message TrackResponse {
+    Observation observation = 1;
+}
+
 service Silo {
     rpc cam_info(CamInfoRequest) returns(CamInfoResponse);
     rpc cam_join(CamJoinRequest) returns(CamJoinResponse);
     rpc ctrl_clear(ClearRequest) returns(ClearResponse);
     rpc ctrl_ping(PingRequest) returns(PingResponse);
     rpc report(ReportRequest) returns(ReportResponse);
+    rpc track(TrackRequest) returns(TrackResponse);
 }

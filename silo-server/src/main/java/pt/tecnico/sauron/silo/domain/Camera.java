@@ -2,6 +2,7 @@ package pt.tecnico.sauron.silo.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Camera {
     private List<ObservationDomain> observations = new ArrayList<>();
@@ -9,7 +10,7 @@ public class Camera {
     private float latitude;
     private float longitude;
 
-    public Camera(String name, float latitude, float longitude){
+    public Camera(String name, float latitude, float longitude) {
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -41,6 +42,12 @@ public class Camera {
 
     public List<ObservationDomain> getObservations() {
         return observations;
+    }
+
+    public List<ObservationDomain> getObjectObservations(ObservationDomain.Target target, String id) {
+        return this.observations.stream()
+                .filter(obs -> obs.getTarget() == target && obs.getId() == id)
+                .collect(Collectors.toList());
     }
 
 }
