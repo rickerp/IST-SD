@@ -62,7 +62,7 @@ message CamInfoResponse {
 
 message TrackRequest {
     Target target = 1;
-    String id = 2;
+    string id = 2;
 }
 
 message TrackResponse {
