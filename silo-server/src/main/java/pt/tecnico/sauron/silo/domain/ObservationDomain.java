@@ -1,29 +1,17 @@
 package pt.tecnico.sauron.silo.domain;
 
+import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
+
 import java.sql.Timestamp;
 
 public class ObservationDomain {
-    public enum Target {
-        CAR,
-        PERSON
-    }
 
-    private String id;
+    public ObservationObject object;
     private Timestamp timestamp;
-    private Target target;
 
-    public ObservationDomain(String id, Target target, Timestamp timestamp){
-        this.id = id;
-        this.target = target;
-        this.timestamp = timestamp;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    public ObservationDomain(ObservationObject object, Timestamp timestamp){
+        setObject(object);
+        setTimestamp(timestamp);
     }
 
     public Timestamp getTimestamp() {
@@ -34,12 +22,11 @@ public class ObservationDomain {
         this.timestamp = timestamp;
     }
 
-    public Target getTarget() {
-        return target;
+    public ObservationObject getObject() {
+        return object;
     }
 
-    public void setTarget(Target target) {
-        this.target = target;
+    public void setObject(ObservationObject object) {
+        this.object = object;
     }
-
 }
