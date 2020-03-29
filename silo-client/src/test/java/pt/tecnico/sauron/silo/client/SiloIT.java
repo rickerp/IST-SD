@@ -49,10 +49,24 @@ public class SiloIT extends BaseIT {
 	}
 
 	@Test
+	public void camJoinShouldSucceed() {
+
+		CamJoinResponse response = client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName("camJoinShouldSucceed")
+						.setLongitude(0)
+						.setLatitude(0)
+						.build()
+		);
+
+		assertTrue(response.getSuccess());
+	}
+
+	@Test
 	public void camJoinShouldNotAcceptRepeatedName() {
 		final String cameraName = "camJoinShouldNotAcceptRepeatedName";
 
-		CamJoinResponse responseBefore = client.camJoin(
+		client.camJoin(
 				CamJoinRequest.newBuilder()
 						.setCameraName(cameraName)
 						.setLatitude(0)
@@ -64,7 +78,6 @@ public class SiloIT extends BaseIT {
 						.setCameraName(cameraName).build()
 		);
 
-		assertTrue(responseBefore.getSuccess());
 		assertFalse(responseAfter.getSuccess());
 	}
 
