@@ -33,8 +33,6 @@ public class SpotterApp {
 
 		Scanner scanner = new Scanner(System.in);
 
-		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
-
 		while (scanner.hasNextLine()) {
 
 			String line = scanner.nextLine();
@@ -51,26 +49,30 @@ public class SpotterApp {
 					; // TODO: spot with match
 				}
 
-				if (tokens[1].equals("person"))
-					trackRequest.setTarget(Target.PERSON);
-				else if (tokens[1].equals("car"))
-					trackRequest.setTarget(Target.CAR);
-				else{
-					System.out.println("Invalid type value. Types available: car, person");
-					continue;
-				}
-
-				trackRequest.setId(tokens[2]);
-
-				TrackResponse response = client.spot(trackRequest.build());
-
-				System.out.printf("%s,%s,%s,,,%n",
-						response.getObservation().getTarget().toString(),
-						response.getObservation().getId(),
-						response.getObservation().getTs().toString()
-				);
+				spot(tokens[1], tokens[2], client);
 			}
 		}
+	}
+
+	public static void spot(String type, String id, SiloClientFrontend client){
+		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+
+		if (type.equals("person"))
+			trackRequest.setTarget(Target.PERSON);
+		else if (type.equals("car"))
+			trackRequest.setTarget(Target.CAR);
+		else
+			System.out.println("Invalid type value. Types available: car, person");
+
+		trackRequest.setId(id);
+
+		TrackResponse response = client.spot(trackRequest.build());
+
+		System.out.printf("%s,%s,%s,,,%n",
+				response.getObservation().getTarget().toString(),
+				response.getObservation().getId(),
+				response.getObservation().getTs().toString()
+		);
 	}
 
 }
