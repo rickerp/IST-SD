@@ -44,7 +44,7 @@ public class SiloServerBackend {
         return cameras.stream()
                 .map(cam -> cam.getObjectObservations(object))
                 .flatMap(List::stream)
-                .min(Comparator.comparing(ObservationDomain::getTimestamp))
+                .max(Comparator.comparing(ObservationDomain::getTimestamp))
                 .orElseThrow(() -> new SiloException("No observations found."));
     }
 }
