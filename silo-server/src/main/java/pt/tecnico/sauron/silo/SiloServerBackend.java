@@ -45,6 +45,6 @@ public class SiloServerBackend {
                     .flatMap(List::stream)
                     .sorted((obs1, obs2) -> obs1.getTimestamp().after(obs2.getTimestamp()) ? 1 : -1)
                     .findFirst()
-                    .orElse(null);
+                    .orElse(null) ;
     }
 }
