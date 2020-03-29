@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
+
 public class Camera {
 
     private List<ObservationDomain> observations = new ArrayList<>();
@@ -61,4 +63,10 @@ public class Camera {
                 .collect(Collectors.toList());
     }
 
+    public List<ObservationObject> getObjects(Class<? extends ObservationObject> targetType, String idLike) {
+        return this.observations.stream()
+                        .map(ObservationDomain::getObject)
+                        .filter(s -> s.getClass().equals(targetType) && s.getStringId().matches(idLike.replace("*", ".*")))
+                        .collect(Collectors.toList());
+    }
 }

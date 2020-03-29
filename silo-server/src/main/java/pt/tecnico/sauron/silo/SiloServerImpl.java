@@ -12,6 +12,7 @@ import pt.tecnico.sauron.silo.grpc.*;
 
 import java.sql.Timestamp;
 import java.util.stream.Collectors;
+import java.util.List;
 
 public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
@@ -19,6 +20,15 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     private io.grpc.StatusRuntimeException getGRPCException(SiloException siloException) {
         return Status.INVALID_ARGUMENT.withDescription(siloException.getMessage()).asRuntimeException();
+    }
+
+    private Class<? extends ObservationObject> toDomainType(Target target) {
+        switch (target) {
+            case CAR: return Car.class;
+            case PERSON: return Person.class;
+            default: return ObservationObject.class;
+        }
+
     }
 
     private ObservationObject parseObject(Target target, String id) {
@@ -134,5 +144,23 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         } catch (SiloException siloException) {
             responseObserver.onError(getGRPCException(siloException));
         }
+    }
+
+    @Override
+    public void trackMatch(TrackRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
+        try {
+            List<Observation> observations = serverBackend
+                                                .trackMatch(toDomainType(request.getTarget()), request.getId())
+                                                .stream()
+                                                .map(this::toObservation)
+                                                .collect(Collectors.toList());
+
+            TrackMatchResponse response = TrackMatchResponse.newBuilder().addAllObservations(observations).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (SiloException siloException) {
+            responseObserver.onError(getGRPCException(siloException));
+        }
+        
     }
 }

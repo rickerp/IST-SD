@@ -14,6 +14,11 @@ public class Person extends ObservationObject {
         return id;
     }
 
+    @Override
+    public String getStringId() {
+        return Long.toString(id);
+    }
+
     public void setId(long id) throws SiloException {
         if (id < 0) {
             throw new SiloException("Person id should be >= 0");

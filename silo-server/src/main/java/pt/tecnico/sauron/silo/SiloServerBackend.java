@@ -3,11 +3,13 @@ package pt.tecnico.sauron.silo;
 import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.ObservationDomain;
 import pt.tecnico.sauron.silo.domain.SiloException;
+import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SiloServerBackend {
     private List<Camera> cameras = new ArrayList<>();
@@ -47,4 +49,15 @@ public class SiloServerBackend {
                 .max(Comparator.comparing(ObservationDomain::getTimestamp))
                 .orElseThrow(() -> new SiloException("No observations found."));
     }
+
+    public List<ObservationDomain> trackMatch(Class<? extends ObservationObject> targetType, String idLike) {
+        return cameras.stream()
+                        .map(cam -> cam.getObjects(targetType, idLike))
+                        .flatMap(List::stream)
+                        .distinct()
+                        .map(this::track)
+                        .collect(Collectors.toList());
+                    
+    }
+    
 }

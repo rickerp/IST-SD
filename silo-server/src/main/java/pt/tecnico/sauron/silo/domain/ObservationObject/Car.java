@@ -14,6 +14,11 @@ public class Car extends ObservationObject {
         return plate;
     }
 
+    @Override
+    public String getStringId() {
+        return plate;
+    }
+
     public void setPlate(String plate) throws SiloException {
         if (plate.length() != 6) {
             throw new SiloException("Plate should have 6 characters.");

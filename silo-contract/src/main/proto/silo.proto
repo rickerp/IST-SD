@@ -75,6 +75,10 @@ message TrackResponse {
     Observation observation = 1;
 }
 
+message TrackMatchResponse {
+    repeated Observation observations = 1;
+}
+
 service Silo {
     rpc cam_info(CamInfoRequest) returns(CamInfoResponse);
     rpc cam_join(CamJoinRequest) returns(CamJoinResponse);
@@ -82,4 +86,5 @@ service Silo {
     rpc ctrl_ping(PingRequest) returns(PingResponse);
     rpc report(ReportRequest) returns(ReportResponse);
     rpc track(TrackRequest) returns(TrackResponse);
+    rpc trackMatch(TrackRequest) returns(TrackMatchResponse);
 }
