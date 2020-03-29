@@ -36,6 +36,7 @@ public class BaseIT {
 	
 	@AfterAll
 	public static void cleanup() {
+		client.clear();
 	}
 
 }

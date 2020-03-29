@@ -14,6 +14,10 @@ public class SiloServerBackend {
 
     }
 
+    public void clear() {
+        cameras.clear();
+    }
+
     public boolean report(String cameraName, List<ObservationDomain> newObservations) {
         Camera camera = getCamera(cameraName);
         if (camera == null) {
