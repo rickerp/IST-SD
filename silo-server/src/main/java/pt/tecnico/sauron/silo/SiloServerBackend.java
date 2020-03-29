@@ -4,6 +4,7 @@ import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.ObservationDomain;
 import pt.tecnico.sauron.silo.domain.SiloException;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
