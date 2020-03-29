@@ -1,8 +1,10 @@
 package pt.tecnico.sauron.silo.client;
 
+import io.grpc.StatusRuntimeException;
 import org.junit.jupiter.api.*;
 import pt.tecnico.sauron.silo.grpc.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import static org.junit.Assert.*;
@@ -10,13 +12,15 @@ import static org.junit.Assert.*;
 public class SiloIT extends BaseIT {
 	
 	// static members
-	// TODO	
+	// TODO
+	private static int i = 0;
+	private static String cameraName;
 	
 	
 	// one-time initialization and clean-up
 	@BeforeAll
 	public static void oneTimeSetUp(){
-		
+
 	}
 
 	@AfterAll
@@ -28,7 +32,8 @@ public class SiloIT extends BaseIT {
 	
 	@BeforeEach
 	public void setUp() {
-		
+		cameraName = "cameraN" + i;
+		++i;
 	}
 	
 	@AfterEach
@@ -50,22 +55,19 @@ public class SiloIT extends BaseIT {
 
 	@Test
 	public void camJoinShouldSucceed() {
-
-		CamJoinResponse response = client.camJoin(
-				CamJoinRequest.newBuilder()
-						.setCameraName("camJoinShouldSucceed")
-						.setLongitude(0)
-						.setLatitude(0)
-						.build()
-		);
-
-		assertTrue(response.getSuccess());
+		Assertions.assertDoesNotThrow(() -> {
+			client.camJoin(
+					CamJoinRequest.newBuilder()
+							.setCameraName(cameraName)
+							.setLongitude(0)
+							.setLatitude(0)
+							.build()
+			);
+		});
 	}
 
 	@Test
 	public void camJoinShouldNotAcceptRepeatedName() {
-		final String cameraName = "camJoinShouldNotAcceptRepeatedName";
-
 		client.camJoin(
 				CamJoinRequest.newBuilder()
 						.setCameraName(cameraName)
@@ -73,17 +75,17 @@ public class SiloIT extends BaseIT {
 						.setLongitude(0).build()
 		);
 
-		CamJoinResponse responseAfter = client.camJoin(
-				CamJoinRequest.newBuilder()
-						.setCameraName(cameraName).build()
-		);
-
-		assertFalse(responseAfter.getSuccess());
+		Assertions.assertThrows(StatusRuntimeException.class, () -> {
+			client.camJoin(CamJoinRequest
+					.newBuilder()
+					.setCameraName(cameraName)
+					.build()
+			);
+		});
 	}
 
 	@Test
 	public void camInfoShouldReturnCorrectCoordinates() {
-		final String cameraName = "camInfoShouldReturnCorrectCoordinates";
 		final float latitude = 55;
 		final float longitude = 43;
 
@@ -107,21 +109,18 @@ public class SiloIT extends BaseIT {
 
 	@Test
 	public void reportShouldFailWithUnknownCameraName() {
-
-		ReportResponse response = client.report(
-				ReportRequest.newBuilder()
-					.setCameraName("reportShouldFailWithUnknownCameraName")
-					.addAllObservations(new ArrayList<>())
-					.build()
-		);
-
-		assertFalse(response.getSuccess());
+		Assertions.assertThrows(StatusRuntimeException.class, () -> {
+			client.report(
+					ReportRequest.newBuilder()
+							.setCameraName(cameraName)
+							.addAllObservations(new ArrayList<>())
+							.build()
+			);
+		});
 	}
 
 	@Test
 	public void reportShouldSucceed() {
-
-		final String cameraName = "reportShouldSucceed";
 
 		client.camJoin(
 				CamJoinRequest.newBuilder()
@@ -131,13 +130,13 @@ public class SiloIT extends BaseIT {
 						.build()
 		);
 
-		ReportResponse response = client.report(
-				ReportRequest.newBuilder()
-						.setCameraName(cameraName)
-						.addAllObservations(new ArrayList<>())
-						.build()
-		);
-
-		assertTrue(response.getSuccess());
+		Assertions.assertDoesNotThrow(() -> {
+			client.report(
+					ReportRequest.newBuilder()
+							.setCameraName(cameraName)
+							.addAllObservations(new ArrayList<>())
+							.build()
+			);
+		});
 	}
 }
