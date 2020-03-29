@@ -1,8 +1,8 @@
-package pt.tecnico.sauron.silo.domain.Object;
+package pt.tecnico.sauron.silo.domain.ObservationObject;
 
 import pt.tecnico.sauron.silo.domain.SiloException;
 
-public class Person extends Object {
+public class Person extends ObservationObject {
 
     private long id;
 

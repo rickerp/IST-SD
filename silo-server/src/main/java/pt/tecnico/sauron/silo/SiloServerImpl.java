@@ -2,9 +2,9 @@ package pt.tecnico.sauron.silo;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import pt.tecnico.sauron.silo.domain.Object.Car;
-import pt.tecnico.sauron.silo.domain.Object.Object;
-import pt.tecnico.sauron.silo.domain.Object.Person;
+import pt.tecnico.sauron.silo.domain.ObservationObject.Car;
+import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
+import pt.tecnico.sauron.silo.domain.ObservationObject.Person;
 import pt.tecnico.sauron.silo.domain.ObservationDomain;
 import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.SiloException;
@@ -21,8 +21,8 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         return Status.INVALID_ARGUMENT.withDescription(siloException.getMessage()).asRuntimeException();
     }
 
-    private Object parseObject(Target target, String id) {
-        Object object = null;
+    private ObservationObject parseObject(Target target, String id) {
+        ObservationObject object = null;
         switch (target) {
             case CAR:
                 object = new Car(id);
@@ -49,7 +49,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     }
 
     private Observation toObservation(ObservationDomain observationDomain) {
-        Object object = observationDomain.getObject();
+        ObservationObject object = observationDomain.getObject();
         Target target = null;
         String id = null;
         if (object instanceof Car) {

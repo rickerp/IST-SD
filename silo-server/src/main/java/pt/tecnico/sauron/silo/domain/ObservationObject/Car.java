@@ -1,8 +1,8 @@
-package pt.tecnico.sauron.silo.domain.Object;
+package pt.tecnico.sauron.silo.domain.ObservationObject;
 
 import pt.tecnico.sauron.silo.domain.SiloException;
 
-public class Car extends Object {
+public class Car extends ObservationObject {
 
     private String plate;
 
