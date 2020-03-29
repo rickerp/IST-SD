@@ -64,7 +64,7 @@ public class SpotterApp {
 
 				TrackResponse response = client.spot(trackRequest.build());
 
-				System.out.printf("%s,%s,%s,,,",
+				System.out.printf("%s,%s,%s,,,%n",
 						response.getObservation().getTarget().toString(),
 						response.getObservation().getId(),
 						response.getObservation().getTs().toString()
