@@ -1,10 +1,9 @@
 package pt.tecnico.sauron.silo.client;
 
 import org.junit.jupiter.api.*;
-import pt.tecnico.sauron.silo.grpc.CamInfoRequest;
-import pt.tecnico.sauron.silo.grpc.CamInfoResponse;
-import pt.tecnico.sauron.silo.grpc.CamJoinRequest;
-import pt.tecnico.sauron.silo.grpc.CamJoinResponse;
+import pt.tecnico.sauron.silo.grpc.*;
+
+import java.util.ArrayList;
 
 import static org.junit.Assert.*;
 
@@ -91,6 +90,19 @@ public class SiloIT extends BaseIT {
 
 		assertEquals(camInfoResponse.getLatitude(), latitude, 0);
 		assertEquals(camInfoResponse.getLongitude(), longitude, 0);
+	}
+
+	@Test
+	public void reportShouldFailWithUnknownCameraName() {
+
+		ReportResponse response = client.report(
+				ReportRequest.newBuilder()
+					.setCameraName("reportShouldFailWithUnknownCameraName")
+					.addAllObservations(new ArrayList<Observation>())
+					.build()
+		);
+
+		assertFalse(response.getSuccess());
 	}
 
 }

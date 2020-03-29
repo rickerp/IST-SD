@@ -7,10 +7,11 @@ import pt.tecnico.sauron.silo.grpc.*;
 public class SiloClientFrontend {
 
     SiloGrpc.SiloBlockingStub stub;
+    ManagedChannel channel;
 
     public SiloClientFrontend(String host, int port) {
         final String target = host + ":" + port;
-        final ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+        channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
         stub = SiloGrpc.newBlockingStub(channel);
     }
 
@@ -33,6 +34,10 @@ public class SiloClientFrontend {
 
     public CamInfoResponse camInfo(CamInfoRequest camInfoRequest) {
         return stub.camInfo(camInfoRequest);
+    }
+
+    public void end() {
+        channel.shutdown();
     }
 
 }
