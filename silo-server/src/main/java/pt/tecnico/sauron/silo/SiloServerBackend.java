@@ -3,6 +3,7 @@ package pt.tecnico.sauron.silo;
 import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.ObservationDomain;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
