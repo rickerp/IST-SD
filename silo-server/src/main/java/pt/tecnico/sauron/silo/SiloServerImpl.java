@@ -12,9 +12,9 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     private SiloServerBackend serverBackend = new SiloServerBackend();
 
-    private ObservationDomain toObservationDomain(Observation observation) {
+    private ObservationDomain.Target toTargetDomain(Target target) {
         ObservationDomain.Target domainTarget = null;
-        switch (observation.getTarget()) {
+        switch (target) {
             case CAR:
                 domainTarget = ObservationDomain.Target.CAR;
                 break;
@@ -22,12 +22,36 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 domainTarget = ObservationDomain.Target.PERSON;
                 break;
         }
+        return domainTarget;
+    }
 
+    private Target toTarget(ObservationDomain.Target domainTarget) {
+        Target target = null;
+        switch (domainTarget) {
+            case CAR:
+                target = Target.CAR;
+                break;
+            case PERSON:
+                target = Target.PERSON;
+                break;
+        }
+        return target;
+    }
+
+    private ObservationDomain toObservationDomain(Observation observation) {
         return new ObservationDomain(
                 observation.getId(),
-                domainTarget,
+                toTargetDomain(observation.getTarget()),
                 new Timestamp(System.currentTimeMillis())
         );
+    }
+
+    private Observation toObservation(ObservationDomain observationDomain) {
+        return Observation.newBuilder()
+                    .setId(observationDomain.getId())
+                    .setTarget(toTarget(observationDomain.getTarget()))
+                    .setTs(com.google.protobuf.Timestamp.newBuilder().setSeconds(observationDomain.getTimestamp().getTime() / 1000))
+                    .build();
     }
 
     @Override
@@ -70,6 +94,14 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
         boolean success = serverBackend.report(request.getCameraName(), request.getObservationsList().stream().map(this::toObservationDomain).collect(Collectors.toList()));
         ReportResponse response = ReportResponse.newBuilder().setSuccess(success).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
+        Observation observation = toObservation(serverBackend.track(toTargetDomain(request.getTarget()) , request.getId()))
+        TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

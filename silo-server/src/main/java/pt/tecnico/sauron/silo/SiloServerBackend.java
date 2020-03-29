@@ -6,7 +6,6 @@ import pt.tecnico.sauron.silo.domain.ObservationDomain;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class SiloServerBackend {
     private List<Camera> cameras = new ArrayList<>();
 
@@ -38,5 +37,14 @@ public class SiloServerBackend {
         }
         cameras.add(new Camera(name, latitude, longitude));
         return true;
+    }
+
+    public ObservationDomain track(ObservationDomain.Target target, String id) {
+        return cameras.stream()
+                    .map(cam -> cam.getObjectObservations(target, id))
+                    .flatMap(List::stream)
+                    .sorted((obs1, obs2) -> obs1.getTimestamp().after(obs2.getTimestamp()) ? 1 : -1)
+                    .findFirst()
+                    .orElse(null) ;
     }
 }

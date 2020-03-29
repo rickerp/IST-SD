@@ -2,9 +2,14 @@
 // Protocol buffers definition for Silo server
 //
 syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
 package pt.tecnico.sauron.silo.grpc;
 
+
 option java_multiple_files = true;
+
 
 enum Target {
     CAR = 0;
@@ -30,6 +35,7 @@ message ClearResponse {
 message Observation {
     Target target  = 1;
     string id = 2;
+    google.protobuf.Timestamp ts = 3;
 }
 
 message ReportRequest {
@@ -60,10 +66,20 @@ message CamInfoResponse {
     float longitude = 3;
 };
 
+message TrackRequest {
+    Target target = 1;
+    string id = 2;
+}
+
+message TrackResponse {
+    Observation observation = 1;
+}
+
 service Silo {
     rpc cam_info(CamInfoRequest) returns(CamInfoResponse);
     rpc cam_join(CamJoinRequest) returns(CamJoinResponse);
     rpc ctrl_clear(ClearRequest) returns(ClearResponse);
     rpc ctrl_ping(PingRequest) returns(PingResponse);
     rpc report(ReportRequest) returns(ReportResponse);
+    rpc track(TrackRequest) returns(TrackResponse);
 }
