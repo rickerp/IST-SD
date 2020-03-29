@@ -36,6 +36,10 @@ public class SiloClientFrontend {
         return stub.camInfo(camInfoRequest);
     }
 
+    public TrackResponse spot(TrackRequest trackRequest) {
+        return stub.track(trackRequest);
+    }
+
     public void end() {
         channel.shutdown();
     }

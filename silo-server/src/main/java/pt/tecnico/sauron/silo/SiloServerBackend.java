@@ -2,8 +2,12 @@ package pt.tecnico.sauron.silo;
 
 import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.ObservationDomain;
+import pt.tecnico.sauron.silo.domain.SiloException;
+import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,10 +22,10 @@ public class SiloServerBackend {
         cameras.clear();
     }
 
-    public boolean report(String cameraName, List<ObservationDomain> newObservations) {
+    public boolean report(String cameraName, List<ObservationDomain> newObservations) throws SiloException {
         Camera camera = getCamera(cameraName);
         if (camera == null) {
-            return false;
+            throw new SiloException("Camera does not exist with name " + cameraName + ".");
         }
         camera.getObservations().addAll(newObservations);
         return true;
@@ -31,30 +35,27 @@ public class SiloServerBackend {
         return cameras.stream().filter(x -> x.getName().equals(cameraName)).findFirst().orElse(null);
     }
 
-    public boolean camJoin(String name, float latitude, float longitude) {
-        System.out.println("joining " + name);
+    public void camJoin(String name, float latitude, float longitude) throws SiloException {
         if (getCamera(name) != null) {
-            return false;
+            throw new SiloException("Camera with name " + name + " already exists.");
         }
         cameras.add(new Camera(name, latitude, longitude));
-        return true;
     }
 
-    public ObservationDomain track(ObservationDomain.Target target, String id) {
+    public ObservationDomain track(Object object) throws SiloException {
         return cameras.stream()
-                    .map(cam -> cam.getObjectObservations(target, id))
-                    .flatMap(List::stream)
-                    .sorted((obs1, obs2) -> obs1.getTimestamp().after(obs2.getTimestamp()) ? 1 : -1)
-                    .findFirst()
-                    .orElse(null) ;
+                .map(cam -> cam.getObjectObservations(object))
+                .flatMap(List::stream)
+                .max(Comparator.comparing(ObservationDomain::getTimestamp))
+                .orElseThrow(() -> new SiloException("No observations found."));
     }
 
-    public List<ObservationDomain> trackMatch(ObservationDomain.Target target, String idLike) {
+    public List<ObservationDomain> trackMatch(Class<? extends ObservationObject> targetType, String idLike) {
         return cameras.stream()
-                        .map(cam -> cam.getIds(target, idLike))
+                        .map(cam -> cam.getObjects(targetType, idLike))
                         .flatMap(List::stream)
                         .distinct()
-                        .map(id -> track(target, id))
+                        .map(this::track)
                         .collect(Collectors.toList());
                     
     }
