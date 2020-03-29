@@ -1,10 +1,9 @@
 package pt.tecnico.sauron.silo.client;
 
 import org.junit.jupiter.api.*;
-import pt.tecnico.sauron.silo.grpc.CamInfoRequest;
-import pt.tecnico.sauron.silo.grpc.CamInfoResponse;
-import pt.tecnico.sauron.silo.grpc.CamJoinRequest;
-import pt.tecnico.sauron.silo.grpc.CamJoinResponse;
+import pt.tecnico.sauron.silo.grpc.*;
+
+import java.util.ArrayList;
 
 import static org.junit.Assert.*;
 
@@ -50,10 +49,24 @@ public class SiloIT extends BaseIT {
 	}
 
 	@Test
+	public void camJoinShouldSucceed() {
+
+		CamJoinResponse response = client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName("camJoinShouldSucceed")
+						.setLongitude(0)
+						.setLatitude(0)
+						.build()
+		);
+
+		assertTrue(response.getSuccess());
+	}
+
+	@Test
 	public void camJoinShouldNotAcceptRepeatedName() {
 		final String cameraName = "camJoinShouldNotAcceptRepeatedName";
 
-		CamJoinResponse responseBefore = client.camJoin(
+		client.camJoin(
 				CamJoinRequest.newBuilder()
 						.setCameraName(cameraName)
 						.setLatitude(0)
@@ -65,7 +78,6 @@ public class SiloIT extends BaseIT {
 						.setCameraName(cameraName).build()
 		);
 
-		assertTrue(responseBefore.getSuccess());
 		assertFalse(responseAfter.getSuccess());
 	}
 
@@ -93,4 +105,39 @@ public class SiloIT extends BaseIT {
 		assertEquals(camInfoResponse.getLongitude(), longitude, 0);
 	}
 
+	@Test
+	public void reportShouldFailWithUnknownCameraName() {
+
+		ReportResponse response = client.report(
+				ReportRequest.newBuilder()
+					.setCameraName("reportShouldFailWithUnknownCameraName")
+					.addAllObservations(new ArrayList<>())
+					.build()
+		);
+
+		assertFalse(response.getSuccess());
+	}
+
+	@Test
+	public void reportShouldSucceed() {
+
+		final String cameraName = "reportShouldSucceed";
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLatitude(55)
+						.setLongitude(43)
+						.build()
+		);
+
+		ReportResponse response = client.report(
+				ReportRequest.newBuilder()
+						.setCameraName(cameraName)
+						.addAllObservations(new ArrayList<>())
+						.build()
+		);
+
+		assertTrue(response.getSuccess());
+	}
 }
