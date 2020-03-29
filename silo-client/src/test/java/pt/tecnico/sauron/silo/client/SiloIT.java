@@ -98,11 +98,33 @@ public class SiloIT extends BaseIT {
 		ReportResponse response = client.report(
 				ReportRequest.newBuilder()
 					.setCameraName("reportShouldFailWithUnknownCameraName")
-					.addAllObservations(new ArrayList<Observation>())
+					.addAllObservations(new ArrayList<>())
 					.build()
 		);
 
 		assertFalse(response.getSuccess());
 	}
 
+	@Test
+	public void reportShouldSucceed() {
+
+		final String cameraName = "reportShouldSucceed";
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLatitude(55)
+						.setLongitude(43)
+						.build()
+		);
+
+		ReportResponse response = client.report(
+				ReportRequest.newBuilder()
+						.setCameraName(cameraName)
+						.addAllObservations(new ArrayList<>())
+						.build()
+		);
+
+		assertTrue(response.getSuccess());
+	}
 }
