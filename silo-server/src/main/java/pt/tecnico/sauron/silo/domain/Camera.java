@@ -46,7 +46,7 @@ public class Camera {
 
     public List<ObservationDomain> getObjectObservations(ObservationDomain.Target target, String id) {
         return this.observations.stream()
-                .filter(obs -> obs.getTarget() == target && obs.getId() == id)
+                .filter(obs -> obs.getTarget() == target && obs.getId().equals(id))
                 .collect(Collectors.toList());
     }
 
