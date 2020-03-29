@@ -100,7 +100,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     @Override
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
-        Observation observation = toObservation(serverBackend.track(toTargetDomain(request.getTarget()) , request.getId()))
+        Observation observation = toObservation(serverBackend.track(toTargetDomain(request.getTarget()) , request.getId()));
         TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
