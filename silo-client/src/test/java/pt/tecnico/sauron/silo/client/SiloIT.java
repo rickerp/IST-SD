@@ -155,6 +155,17 @@ public class SiloIT extends BaseIT {
 	}
 
 	@Test
+	public void camInfoShouldFailWithUnknownCameraName() {
+		Assertions.assertThrows(StatusRuntimeException.class, () -> {
+			client.camInfo(
+					CamInfoRequest.newBuilder()
+						.setCameraName(cameraName)
+						.build()
+			);
+		});
+	}
+
+	@Test
 	public void reportShouldFailWithUnknownCameraName() {
 		Assertions.assertThrows(StatusRuntimeException.class, () -> {
 			client.report(
@@ -347,6 +358,41 @@ public class SiloIT extends BaseIT {
 		);
 
 		assertEquals(i, response.getObservationsCount());
+	}
+
+	@Test
+	public void trackMatchShouldReturnOneMostRecent() {
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLatitude(0)
+						.setLongitude(0)
+						.build()
+		);
+
+		final Observation observation = Observation.newBuilder()
+				.setTarget(Target.PERSON)
+				.setId("100")
+				.build();
+
+
+		for (int i = 0; i < 5; ++i) {
+			client.report(
+					ReportRequest.newBuilder()
+							.setCameraName(cameraName)
+							.addObservations(observation)
+					.build()
+			);
+		}
+
+		TrackMatchResponse response = client.trackMatch(
+				TrackRequest.newBuilder()
+						.setTarget(Target.PERSON)
+						.setId("1*")
+						.build()
+		);
+
+		Assertions.assertEquals(1, response.getObservationsCount());
 	}
 
 	@Test

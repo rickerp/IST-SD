@@ -52,11 +52,13 @@ public class SiloServerBackend {
 
     public List<ObservationDomain> trackMatch(Class<? extends ObservationObject> targetType, String idLike) {
         return observations.stream()
-                .filter(s -> {
-                    ObservationObject observationObject = s.getObservationObject();
-                    return observationObject.getClass().equals(targetType) &&
-                            observationObject.getStringId().matches(idLike.replace("*", ".*"));
-                })
+                .map(ObservationDomain::getObservationObject)
+                .filter(s -> s.getClass().equals(targetType) &&
+                             s.getStringId().matches(idLike.replace("*", ".*"))
+                )
+                .distinct()
+                .map(this::track)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
     

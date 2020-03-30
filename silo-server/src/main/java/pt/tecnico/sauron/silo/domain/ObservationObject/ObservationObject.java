@@ -7,4 +7,9 @@ public abstract class ObservationObject {
 
     public abstract String getStringId();
 
+    @Override
+    public int hashCode() {
+        return this.getStringId().hashCode();
+    }
+
 }
