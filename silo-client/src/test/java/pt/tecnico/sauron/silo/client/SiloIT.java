@@ -17,8 +17,7 @@ public class SiloIT extends BaseIT {
 	
 	// static members
 	// TODO
-	private static int i = 0;
-	private static String cameraName;
+	private final static String cameraName = "camera";
 	
 	
 	// one-time initialization and clean-up
@@ -36,8 +35,6 @@ public class SiloIT extends BaseIT {
 	
 	@BeforeEach
 	public void setUp() {
-		cameraName = "cameraN" + i;
-		++i;
 		client.clear();
 	}
 	
@@ -334,7 +331,7 @@ public class SiloIT extends BaseIT {
 				.build();
 
 		client.report(
-				ReportRequest.newBuilder()
+				    ReportRequest.newBuilder()
 						.setCameraName(camera1)
 						.addObservations(observation)
 						.build()
@@ -356,7 +353,6 @@ public class SiloIT extends BaseIT {
 		);
 
 		Assertions.assertEquals(camera2, response.getObservation().getCameraName());
-
 	}
 
 }
