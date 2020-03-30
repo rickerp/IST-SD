@@ -63,7 +63,7 @@ public class SpotterApp {
 
 		trackRequest.setId(id);
 
-		TrackResponse response = client.spot(trackRequest.build());
+		TrackResponse response = client.track(trackRequest.build());
 
 		System.out.printf("%s,%s,%s,,,%n",
 				response.getObservation().getTarget().toString(),
@@ -84,7 +84,7 @@ public class SpotterApp {
 
 		trackRequest.setId(id);
 
-		TrackMatchResponse response = client.spotMatch(trackRequest.build());
+		TrackMatchResponse response = client.trackMatch(trackRequest.build());
 
 		for(Observation obs: response.getObservationsList())
 			System.out.printf("%s,%s,%s,,,%n",
