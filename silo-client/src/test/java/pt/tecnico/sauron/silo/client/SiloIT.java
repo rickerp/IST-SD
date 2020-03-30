@@ -304,4 +304,59 @@ public class SiloIT extends BaseIT {
 
 		assertEquals(i, response.getObservationsCount());
 	}
+
+	@Test
+	public void trackReturnsMostRecent() {
+
+		final String camera1 = cameraName + "1";
+		final String camera2 = cameraName + "2";
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(camera1)
+						.setLatitude(0)
+						.setLongitude(0)
+						.build()
+		);
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(camera2)
+						.setLongitude(0)
+						.setLongitude(0)
+						.build()
+		);
+
+		final String personId = "777";
+		final Observation observation = Observation.newBuilder()
+				.setTarget(Target.PERSON)
+				.setId(personId)
+				.build();
+
+		client.report(
+				ReportRequest.newBuilder()
+						.setCameraName(camera1)
+						.addObservations(observation)
+						.build()
+		);
+
+		client.report(
+				ReportRequest.newBuilder()
+						.setCameraName(camera2)
+						.addObservations(observation)
+						.build()
+		);
+
+
+		TrackResponse response = client.track(
+				TrackRequest.newBuilder()
+						.setTarget(Target.PERSON)
+						.setId(personId)
+						.build()
+		);
+
+		Assertions.assertEquals(camera2, response.getObservation().getCameraName());
+
+	}
+
 }

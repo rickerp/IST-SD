@@ -6,12 +6,22 @@ import java.sql.Timestamp;
 
 public class ObservationDomain {
 
+    private Camera camera;
     public ObservationObject object;
     private Timestamp timestamp;
 
-    public ObservationDomain(ObservationObject object, Timestamp timestamp){
+    public ObservationDomain(ObservationObject object, Timestamp timestamp, Camera camera){
+        setCamera(camera);
         setObject(object);
         setTimestamp(timestamp);
+    }
+
+    public Camera getCamera() {
+        return camera;
+    }
+
+    public void setCamera(Camera camera) {
+        this.camera = camera;
     }
 
     public Timestamp getTimestamp() {

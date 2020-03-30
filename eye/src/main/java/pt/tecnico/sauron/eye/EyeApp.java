@@ -54,7 +54,6 @@ public class EyeApp {
 			if (line.isEmpty() || !scanner.hasNextLine()) {
 				if (!observations.isEmpty()) {
 					ReportRequest reportRequest = ReportRequest.newBuilder()
-							.setCameraName(cameraName)
 							.addAllObservations(observations).build();
 					client.report(reportRequest);
 					observations.clear();
@@ -72,7 +71,10 @@ public class EyeApp {
 				continue;
 			}
 
-			Observation.Builder observationBuilder = Observation.newBuilder().setId(tokens[1]);
+			Observation.Builder observationBuilder = Observation
+					.newBuilder()
+					.setCameraName(cameraName)
+					.setId(tokens[1]);
 
 			if (tokens[0].equals("person")) {
 				observationBuilder.setTarget(Target.PERSON);

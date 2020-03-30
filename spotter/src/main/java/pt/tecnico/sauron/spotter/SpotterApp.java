@@ -46,7 +46,6 @@ public class SpotterApp {
 			if (tokens[0].equals("spot")){
 				if (tokens[2].contains("*"))
 					spotMatch(tokens[1], tokens[2], client);
-
 				else
 					spot(tokens[1], tokens[2], client);
 			}

@@ -54,7 +54,8 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     private ObservationDomain toObservationDomain(Observation observation) throws SiloException {
         return new ObservationDomain(
                 parseObject(observation.getTarget(), observation.getId()),
-                new Timestamp(System.currentTimeMillis())
+                new Timestamp(System.currentTimeMillis()),
+                serverBackend.getCamera(observation.getCameraName())
         );
     }
 
@@ -72,6 +73,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         return Observation.newBuilder()
                     .setId(id)
                     .setTarget(target)
+                    .setCameraName(observationDomain.getCamera().getName())
                     .setTs(com.google.protobuf.Timestamp.newBuilder().setSeconds(observationDomain.getTimestamp().getTime() / 1000))
                     .build();
     }
@@ -121,6 +123,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                     request.getCameraName(),
                     request.getObservationsList()
                             .stream()
+                            .map(o -> o.toBuilder().setCameraName(request.getCameraName()).build())
                             .map(this::toObservationDomain)
                             .collect(Collectors.toList())
             );

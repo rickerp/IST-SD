@@ -36,6 +36,7 @@ message Observation {
     Target target  = 1;
     string id = 2;
     google.protobuf.Timestamp ts = 3;
+    string camera_name = 4;
 }
 
 message ReportRequest {
