@@ -52,21 +52,4 @@ public class Camera {
         }
         this.longitude = longitude;
     }
-
-    public List<ObservationDomain> getObservations() {
-        return observations;
-    }
-
-    public List<ObservationDomain> getObjectObservations(Object object) {
-        return this.observations.stream()
-                .filter(obs -> obs.getObject().equals(object))
-                .collect(Collectors.toList());
-    }
-
-    public List<ObservationObject> getObjects(Class<? extends ObservationObject> targetType, String idLike) {
-        return this.observations.stream()
-                        .map(ObservationDomain::getObject)
-                        .filter(s -> s.getClass().equals(targetType) && s.getStringId().matches(idLike.replace("*", ".*")))
-                        .collect(Collectors.toList());
-    }
 }
