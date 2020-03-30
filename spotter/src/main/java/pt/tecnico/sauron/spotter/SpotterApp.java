@@ -2,9 +2,7 @@ package pt.tecnico.sauron.spotter;
 
 
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
-import pt.tecnico.sauron.silo.grpc.Target;
-import pt.tecnico.sauron.silo.grpc.TrackRequest;
-import pt.tecnico.sauron.silo.grpc.TrackResponse;
+import pt.tecnico.sauron.silo.grpc.*;
 
 import java.util.Scanner;
 
@@ -45,16 +43,15 @@ public class SpotterApp {
 			}
 
 			if (tokens[0].equals("spot")){
-				if (tokens[2].contains("*")){
-					; // TODO: spot with match
-				}
+				if (tokens[2].contains("*"))
+					spotMatch(tokens[1], tokens[2], client);
 
 				spot(tokens[1], tokens[2], client);
 			}
 		}
 	}
 
-	public static void spot(String type, String id, SiloClientFrontend client){
+	public static void spot(String type, String id, SiloClientFrontend client) {
 		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
 
 		if (type.equals("person"))
@@ -75,4 +72,25 @@ public class SpotterApp {
 		);
 	}
 
+	public static void spotMatch(String type, String id, SiloClientFrontend client) {
+		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+
+		if (type.equals("person"))
+			trackRequest.setTarget(Target.PERSON);
+		else if (type.equals("car"))
+			trackRequest.setTarget(Target.CAR);
+		else
+			System.out.println("Invalid type value. Types avaliable: car, person");
+
+		trackRequest.setId(id);
+
+		TrackMatchResponse response = client.spotMatch(trackRequest.build());
+
+		for(Observation obs: response.getObservationsList())
+			System.out.printf("%s,%s,%s,,,%n",
+					obs.getTarget().toString(),
+					obs.getId(),
+					obs.getTs().toString()
+			);
+	}
 }
