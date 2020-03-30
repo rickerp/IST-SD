@@ -2,70 +2,65 @@
 // Protocol buffers definition for Silo server
 //
 syntax = "proto3";
-
 import "google/protobuf/timestamp.proto";
-
 package pt.tecnico.sauron.silo.grpc;
-
-
 option java_multiple_files = true;
 
-
+//#region shared
 enum Target {
     CAR = 0;
     PERSON = 1;
-}
-
-message PingRequest {
-    // TODO: Time of request
-}
-
-message PingResponse {
-
-}
-
-message ClearRequest {
-
-}
-
-message ClearResponse {
-
 }
 
 message Observation {
     Target target  = 1;
     string id = 2;
     google.protobuf.Timestamp ts = 3;
+    string camera_name = 4;
 }
+//#endregion
 
+//#region ping
+message PingRequest {}
+message PingResponse {}
+//#endregion
+
+//#region clear
+message ClearRequest {}
+message ClearResponse {}
+//#endregion
+
+//#region report
 message ReportRequest {
     string camera_name = 1;
     repeated Observation observations = 2;
 }
 
-message ReportResponse {
-    bool success = 1;
-}
+message ReportResponse {}
+//#endregion
 
+//#region cam_join
 message CamJoinRequest {
     string camera_name = 1;
     float latitude = 2;
     float longitude = 3;
 }
 
-message CamJoinResponse {
-    bool success = 1;
-}
+message CamJoinResponse {}
+//#endregion
 
+//#region cam_info
 message CamInfoRequest {
     string camera_name = 1;
 };
 
 message CamInfoResponse {
     float latitude = 1;
-    float longitude = 3;
+    float longitude = 2;
 };
+//#endregion
 
+//#region track
 message TrackRequest {
     Target target = 1;
     string id = 2;
@@ -74,17 +69,22 @@ message TrackRequest {
 message TrackResponse {
     Observation observation = 1;
 }
+//#endregion
+
+//#region trackMatch
+// TODO: Evaluate using TrackMatchRequest
 
 message TrackMatchResponse {
     repeated Observation observations = 1;
 }
+//#endregion
 
 service Silo {
-    rpc cam_info(CamInfoRequest) returns(CamInfoResponse);
-    rpc cam_join(CamJoinRequest) returns(CamJoinResponse);
-    rpc ctrl_clear(ClearRequest) returns(ClearResponse);
-    rpc ctrl_ping(PingRequest) returns(PingResponse);
-    rpc report(ReportRequest) returns(ReportResponse);
-    rpc track(TrackRequest) returns(TrackResponse);
-    rpc trackMatch(TrackRequest) returns(TrackMatchResponse);
+    rpc cam_info(CamInfoRequest)    returns(CamInfoResponse);
+    rpc cam_join(CamJoinRequest)    returns(CamJoinResponse);
+    rpc ctrl_clear(ClearRequest)    returns(ClearResponse);
+    rpc ctrl_ping(PingRequest)      returns(PingResponse);
+    rpc report(ReportRequest)       returns(ReportResponse);
+    rpc track(TrackRequest)         returns(TrackResponse);
+    rpc trackMatch(TrackRequest)    returns(TrackMatchResponse);
 }

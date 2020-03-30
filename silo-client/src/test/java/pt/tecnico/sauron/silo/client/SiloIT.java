@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import pt.tecnico.sauron.silo.grpc.*;
 
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +18,7 @@ public class SiloIT extends BaseIT {
 	
 	// static members
 	// TODO
-	private static int i = 0;
-	private static String cameraName;
+	private final static String cameraName = "camera";
 	
 	
 	// one-time initialization and clean-up
@@ -36,8 +36,6 @@ public class SiloIT extends BaseIT {
 	
 	@BeforeEach
 	public void setUp() {
-		cameraName = "cameraN" + i;
-		++i;
 		client.clear();
 	}
 	
@@ -69,6 +67,50 @@ public class SiloIT extends BaseIT {
 							.build()
 			);
 		});
+	}
+
+	@Test
+	public void camJoinShouldNotAcceptInvalidCoordinates() {
+		final float[][] invalidCoordinates = new float[][]{
+				{-91, 0},
+				{0, -181},
+				{0, 181},
+				{91, 0},
+		};
+
+		for (float[] coords : invalidCoordinates) {
+			Assertions.assertThrows(StatusRuntimeException.class, () -> {
+				client.camJoin(
+						CamJoinRequest.newBuilder()
+								.setLatitude(coords[0])
+								.setLongitude(coords[1])
+								.setCameraName(cameraName)
+								.build()
+				);
+			});
+		}
+
+	}
+
+	@Test
+	public void camJoinShouldNotAcceptInvalidName() {
+		String[] invalidNames = new String[] {
+				"ab",
+				"abcdef%",
+				"fasokfsdfpaskdpfkspdkfskdfksdk"
+		};
+
+		for (String name : invalidNames) {
+			Assertions.assertThrows(StatusRuntimeException.class, () -> {
+					client.camJoin(
+							CamJoinRequest.newBuilder()
+									.setCameraName(name)
+									.setLongitude(0)
+									.setLatitude(0)
+									.build()
+					);
+			});
+		}
 	}
 
 	@Test
@@ -304,4 +346,58 @@ public class SiloIT extends BaseIT {
 
 		assertEquals(i, response.getObservationsCount());
 	}
+
+	@Test
+	public void trackReturnsMostRecent() {
+
+		final String camera1 = cameraName + "1";
+		final String camera2 = cameraName + "2";
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(camera1)
+						.setLatitude(0)
+						.setLongitude(0)
+						.build()
+		);
+
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(camera2)
+						.setLongitude(0)
+						.setLongitude(0)
+						.build()
+		);
+
+		final String personId = "777";
+		final Observation observation = Observation.newBuilder()
+				.setTarget(Target.PERSON)
+				.setId(personId)
+				.build();
+
+		client.report(
+				    ReportRequest.newBuilder()
+						.setCameraName(camera1)
+						.addObservations(observation)
+						.build()
+		);
+
+		client.report(
+				ReportRequest.newBuilder()
+						.setCameraName(camera2)
+						.addObservations(observation)
+						.build()
+		);
+
+
+		TrackResponse response = client.track(
+				TrackRequest.newBuilder()
+						.setTarget(Target.PERSON)
+						.setId(personId)
+						.build()
+		);
+
+		Assertions.assertEquals(camera2, response.getObservation().getCameraName());
+	}
+
 }
