@@ -6,8 +6,6 @@ import pt.tecnico.sauron.silo.client.SiloClientFrontend;
 import pt.tecnico.sauron.silo.grpc.*;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Scanner;
 
@@ -75,12 +73,8 @@ public class SpotterApp {
 		try {
 			TrackResponse response = client.spot(trackRequest.build());
 
-			System.out.printf("%s,%s,%s,,,%n",
-					response.getObservation().getTarget().toString().toLowerCase(),
-					response.getObservation().getId(),
-					Instant.ofEpochSecond(response.getObservation().getTs().getSeconds()).atZone(ZoneId.systemDefault()).toLocalDateTime().toString()
+			printObservation(response.getObservation());
 
-			);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
 		}
@@ -101,16 +95,19 @@ public class SpotterApp {
 		try {
 			TrackMatchResponse response = client.spotMatch(trackRequest.build());
 			
-			for (Observation obs : response.getObservationsList())
-				System.out.printf("%s,%s,%s,,,%n",
-						obs.getTarget().toString().toLowerCase(),
-						obs.getId(),
-						Instant.ofEpochSecond(obs.getTs().getSeconds()).atZone(ZoneId.systemDefault()).toLocalDateTime().toString()
+			for (Observation observation : response.getObservationsList())
+				printObservation(observation);
 
-				);
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
 		}
 	}
 
+	public static void printObservation(Observation observation) {
+		System.out.printf("%s,%s,%s,,,%n",
+				observation.getTarget().toString().toLowerCase(),
+				observation.getId(),
+				Instant.ofEpochSecond(observation.getTs().getSeconds()).atZone(ZoneId.systemDefault()).toLocalDateTime().toString()
+		);
+	}
 }
