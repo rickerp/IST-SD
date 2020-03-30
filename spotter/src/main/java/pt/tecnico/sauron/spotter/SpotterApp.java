@@ -71,7 +71,7 @@ public class SpotterApp {
 		trackRequest.setId(id);
 
 		try {
-			TrackResponse response = client.spot(trackRequest.build());
+			TrackResponse response = client.track(trackRequest.build());
 
 			printObservation(response.getObservation());
 
@@ -93,7 +93,7 @@ public class SpotterApp {
 		trackRequest.setId(id);
 
 		try {
-			TrackMatchResponse response = client.spotMatch(trackRequest.build());
+			TrackMatchResponse response = client.trackMatch(trackRequest.build());
 			
 			for (Observation observation : response.getObservationsList())
 				printObservation(observation);
