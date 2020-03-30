@@ -5,6 +5,7 @@ import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
 import pt.tecnico.sauron.silo.grpc.*;
 
+import javax.sound.midi.SysexMessage;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Scanner;
@@ -72,7 +73,7 @@ public class SpotterApp {
 		try {
 			TrackResponse response = client.track(trackRequest.build());
 
-			printObservation(response.getObservation());
+			printObservation(response.getObservation(), client);
 
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
@@ -93,20 +94,31 @@ public class SpotterApp {
 
 		try {
 			TrackMatchResponse response = client.trackMatch(trackRequest.build());
-			
+
 			for (Observation observation : response.getObservationsList())
-				printObservation(observation);
+				printObservation(observation, client);
 
 		} catch (StatusRuntimeException e) {
 			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
 		}
 	}
 
-	public static void printObservation(Observation observation) {
-		System.out.printf("%s,%s,%s,,,%n",
+	public static void printObservation(Observation observation, SiloClientFrontend client) {
+		String cameraName = observation.getCameraName();
+		if (cameraName.equals("")) {
+			System.out.println("");
+			return;
+		}
+
+		CamInfoResponse camInfo = client.camInfo(CamInfoRequest.newBuilder().setCameraName(cameraName).build());
+
+		System.out.printf("%s,%s,%s,%s,%s,%s%n",
 				observation.getTarget().toString().toLowerCase(),
 				observation.getId(),
-				Instant.ofEpochSecond(observation.getTs().getSeconds()).atZone(ZoneId.systemDefault()).toLocalDateTime().toString()
+				Instant.ofEpochSecond(observation.getTs().getSeconds()).atZone(ZoneId.systemDefault()).toLocalDateTime().toString(),
+				observation.getCameraName(),
+				camInfo.getLatitude(),
+				camInfo.getLongitude()
 		);
 	}
 }
