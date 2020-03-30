@@ -1,5 +1,6 @@
 package pt.tecnico.sauron.silo.client;
 
+import com.google.protobuf.Timestamp;
 import io.grpc.StatusRuntimeException;
 import jdk.jshell.Snippet;
 import org.junit.Assert;
@@ -37,6 +38,7 @@ public class SiloIT extends BaseIT {
 	public void setUp() {
 		cameraName = "cameraN" + i;
 		++i;
+		client.clear();
 	}
 	
 	@AfterEach
@@ -196,5 +198,110 @@ public class SiloIT extends BaseIT {
 							.build()
 			);
 		});
+	}
+
+	@Test
+	public void trackShouldReturnMostRecentObservation() {
+		client.camJoin(
+			CamJoinRequest.newBuilder()
+					.setCameraName(cameraName)
+					.setLongitude(0)
+					.setLatitude(0)
+					.build()
+		);
+
+		String personId = "123";
+		for (int i = 0; i < 3; ++i) {
+			client.report(
+				ReportRequest.newBuilder()
+					.setCameraName(cameraName)
+					.addObservations(
+						Observation.newBuilder()
+							.setTarget(Target.PERSON)
+							.setId(personId)
+							.build()
+					)
+					.build()
+			);
+		}
+
+		TrackResponse response = client.track(
+				TrackRequest.newBuilder()
+						.setId(personId)
+						.setTarget(Target.PERSON)
+						.build()
+		);
+
+		Assertions.assertTrue(response.hasObservation());
+		Assertions.assertEquals(response.getObservation().getId(), personId);
+	}
+
+	@Test
+	public void trackMatchShouldNotReturnUnaskedObservations() {
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLongitude(0)
+						.setLatitude(0)
+						.build()
+		);
+
+		client.report(
+				ReportRequest.newBuilder()
+				.setCameraName(cameraName)
+				.addObservations(
+						Observation.newBuilder()
+								.setId("123")
+								.setTarget(Target.PERSON)
+								.build()
+				)
+				.build()
+		);
+
+		TrackMatchResponse response = client.trackMatch(
+				TrackRequest.newBuilder()
+						.setId("2*")
+						.setTarget(Target.PERSON)
+						.build()
+		);
+
+		assertEquals(0, response.getObservationsCount());
+	}
+
+	@Test
+	public void trackMatchShouldReturnCorrectObservations() {
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLongitude(0)
+						.setLatitude(0)
+						.build()
+		);
+
+		String personId = null;
+		int i;
+		for (i = 0; i < 3; ++i) {
+			personId = "12345" + i;
+			client.report(
+				ReportRequest.newBuilder()
+					.setCameraName(cameraName)
+					.addObservations(
+						Observation.newBuilder()
+							.setTarget(Target.PERSON)
+							.setId(personId)
+							.build()
+					)
+					.build()
+			);
+		}
+
+		TrackMatchResponse response = client.trackMatch(
+			TrackRequest.newBuilder()
+				.setTarget(Target.PERSON)
+				.setId("12345*")
+				.build()
+		);
+
+		assertEquals(i, response.getObservationsCount());
 	}
 }

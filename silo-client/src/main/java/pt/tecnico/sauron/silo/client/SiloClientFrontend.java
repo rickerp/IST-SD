@@ -36,11 +36,11 @@ public class SiloClientFrontend {
         return stub.camInfo(camInfoRequest);
     }
 
-    public TrackResponse spot(TrackRequest trackRequest) {
+    public TrackResponse track(TrackRequest trackRequest) {
         return stub.track(trackRequest);
     }
 
-    public TrackMatchResponse spotMatch(TrackRequest trackRequest){
+    public TrackMatchResponse trackMatch(TrackRequest trackRequest) {
         return stub.trackMatch(trackRequest);
     }
 
