@@ -1,6 +1,7 @@
 package pt.tecnico.sauron.spotter;
 
 
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
 import pt.tecnico.sauron.silo.grpc.*;
 
@@ -46,51 +47,64 @@ public class SpotterApp {
 				if (tokens[2].contains("*"))
 					spotMatch(tokens[1], tokens[2], client);
 
-				spot(tokens[1], tokens[2], client);
+				else
+					spot(tokens[1], tokens[2], client);
 			}
+
+			else
+				System.out.println("Invalid format: (spot|trail) type id");
 		}
 	}
 
 	public static void spot(String type, String id, SiloClientFrontend client) {
-		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+		try {
+			TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
 
-		if (type.equals("person"))
-			trackRequest.setTarget(Target.PERSON);
-		else if (type.equals("car"))
-			trackRequest.setTarget(Target.CAR);
-		else
-			System.out.println("Invalid type value. Types available: car, person");
+			if (type.equals("person"))
+				trackRequest.setTarget(Target.PERSON);
+			else if (type.equals("car"))
+				trackRequest.setTarget(Target.CAR);
+			else
+				System.out.println("Invalid type value. Types available: car, person");
 
-		trackRequest.setId(id);
+			trackRequest.setId(id);
 
-		TrackResponse response = client.spot(trackRequest.build());
+			TrackResponse response = client.spot(trackRequest.build());
 
-		System.out.printf("%s,%s,%s,,,%n",
-				response.getObservation().getTarget().toString(),
-				response.getObservation().getId(),
-				response.getObservation().getTs().toString()
-		);
+			System.out.printf("%s,%s,%s,,,%n",
+					response.getObservation().getTarget().toString(),
+					response.getObservation().getId(),
+					response.getObservation().getTs().toString()
+			);
+		} catch (StatusRuntimeException e) {
+			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+		}
 	}
 
 	public static void spotMatch(String type, String id, SiloClientFrontend client) {
-		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+		try {
+			TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
 
-		if (type.equals("person"))
-			trackRequest.setTarget(Target.PERSON);
-		else if (type.equals("car"))
-			trackRequest.setTarget(Target.CAR);
-		else
-			System.out.println("Invalid type value. Types avaliable: car, person");
+			if (type.equals("person"))
+				trackRequest.setTarget(Target.PERSON);
+			else if (type.equals("car"))
+				trackRequest.setTarget(Target.CAR);
+			else
+				System.out.println("Invalid type value. Types avaliable: car, person");
 
-		trackRequest.setId(id);
+			trackRequest.setId(id);
 
-		TrackMatchResponse response = client.spotMatch(trackRequest.build());
-
-		for(Observation obs: response.getObservationsList())
-			System.out.printf("%s,%s,%s,,,%n",
-					obs.getTarget().toString(),
-					obs.getId(),
-					obs.getTs().toString()
-			);
+			TrackMatchResponse response = client.spotMatch(trackRequest.build());
+			
+			for (Observation obs : response.getObservationsList())
+				System.out.printf("%s,%s,%s,,,%n",
+						obs.getTarget().toString(),
+						obs.getId(),
+						obs.getTs().toString()
+				);
+		} catch (StatusRuntimeException e) {
+			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+		}
 	}
+
 }
