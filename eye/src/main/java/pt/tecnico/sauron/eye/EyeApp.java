@@ -73,7 +73,6 @@ public class EyeApp {
 
 			Observation.Builder observationBuilder = Observation
 					.newBuilder()
-					.setCameraName(cameraName)
 					.setId(tokens[1]);
 
 			if (tokens[0].equals("person")) {
