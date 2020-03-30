@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import pt.tecnico.sauron.silo.grpc.*;
 
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +67,50 @@ public class SiloIT extends BaseIT {
 							.build()
 			);
 		});
+	}
+
+	@Test
+	public void camJoinShouldNotAcceptInvalidCoordinates() {
+		final float[][] invalidCoordinates = new float[][]{
+				{-91, 0},
+				{0, -181},
+				{0, 181},
+				{91, 0},
+		};
+
+		for (float[] coords : invalidCoordinates) {
+			Assertions.assertThrows(StatusRuntimeException.class, () -> {
+				client.camJoin(
+						CamJoinRequest.newBuilder()
+								.setLatitude(coords[0])
+								.setLongitude(coords[1])
+								.setCameraName(cameraName)
+								.build()
+				);
+			});
+		}
+
+	}
+
+	@Test
+	public void camJoinShouldNotAcceptInvalidName() {
+		String[] invalidNames = new String[] {
+				"ab",
+				"abcdef%",
+				"fasokfsdfpaskdpfkspdkfskdfksdk"
+		};
+
+		for (String name : invalidNames) {
+			Assertions.assertThrows(StatusRuntimeException.class, () -> {
+					client.camJoin(
+							CamJoinRequest.newBuilder()
+									.setCameraName(name)
+									.setLongitude(0)
+									.setLatitude(0)
+									.build()
+					);
+			});
+		}
 	}
 
 	@Test
