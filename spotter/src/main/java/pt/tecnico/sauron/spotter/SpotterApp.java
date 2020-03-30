@@ -57,18 +57,18 @@ public class SpotterApp {
 	}
 
 	public static void spot(String type, String id, SiloClientFrontend client) {
+		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+
+		if (type.equals("person"))
+			trackRequest.setTarget(Target.PERSON);
+		else if (type.equals("car"))
+			trackRequest.setTarget(Target.CAR);
+		else
+			System.out.println("Invalid type value. Types available: car, person");
+
+		trackRequest.setId(id);
+
 		try {
-			TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
-
-			if (type.equals("person"))
-				trackRequest.setTarget(Target.PERSON);
-			else if (type.equals("car"))
-				trackRequest.setTarget(Target.CAR);
-			else
-				System.out.println("Invalid type value. Types available: car, person");
-
-			trackRequest.setId(id);
-
 			TrackResponse response = client.spot(trackRequest.build());
 
 			System.out.printf("%s,%s,%s,,,%n",
@@ -82,18 +82,18 @@ public class SpotterApp {
 	}
 
 	public static void spotMatch(String type, String id, SiloClientFrontend client) {
+		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+
+		if (type.equals("person"))
+			trackRequest.setTarget(Target.PERSON);
+		else if (type.equals("car"))
+			trackRequest.setTarget(Target.CAR);
+		else
+			System.out.println("Invalid type value. Types avaliable: car, person");
+
+		trackRequest.setId(id);
+
 		try {
-			TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
-
-			if (type.equals("person"))
-				trackRequest.setTarget(Target.PERSON);
-			else if (type.equals("car"))
-				trackRequest.setTarget(Target.CAR);
-			else
-				System.out.println("Invalid type value. Types avaliable: car, person");
-
-			trackRequest.setId(id);
-
 			TrackMatchResponse response = client.spotMatch(trackRequest.build());
 			
 			for (Observation obs : response.getObservationsList())
