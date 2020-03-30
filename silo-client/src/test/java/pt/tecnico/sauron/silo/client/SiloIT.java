@@ -237,6 +237,38 @@ public class SiloIT extends BaseIT {
 	}
 
 	@Test
+	public void trackMatchShouldNotReturnUnaskedObservations() {
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLongitude(0)
+						.setLatitude(0)
+						.build()
+		);
+
+		client.report(
+				ReportRequest.newBuilder()
+				.setCameraName(cameraName)
+				.addObservations(
+						Observation.newBuilder()
+								.setId("123")
+								.setTarget(Target.PERSON)
+								.build()
+				)
+				.build()
+		);
+
+		TrackMatchResponse response = client.trackMatch(
+				TrackRequest.newBuilder()
+						.setId("2*")
+						.setTarget(Target.PERSON)
+						.build()
+		);
+
+		assertEquals(0, response.getObservationsCount());
+	}
+
+	@Test
 	public void trackMatchShouldReturnCorrectObservations() {
 		client.camJoin(
 				CamJoinRequest.newBuilder()
