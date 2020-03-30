@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 public class ObservationDomain {
 
     private Camera camera;
-    public ObservationObject object;
+    private ObservationObject object;
     private Timestamp timestamp;
 
     public ObservationDomain(ObservationObject object, Timestamp timestamp, Camera camera){
@@ -32,7 +32,7 @@ public class ObservationDomain {
         this.timestamp = timestamp;
     }
 
-    public ObservationObject getObject() {
+    public ObservationObject getObservationObject() {
         return object;
     }
 

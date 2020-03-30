@@ -160,7 +160,9 @@ public class SiloIT extends BaseIT {
 			client.report(
 					ReportRequest.newBuilder()
 							.setCameraName(cameraName)
-							.addAllObservations(new ArrayList<>())
+							.addObservations(
+									Observation.getDefaultInstance()
+							)
 							.build()
 			);
 		});

@@ -11,6 +11,7 @@ import pt.tecnico.sauron.silo.domain.SiloException;
 import pt.tecnico.sauron.silo.grpc.*;
 
 import java.sql.Timestamp;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.List;
 
@@ -52,15 +53,18 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     }
 
     private ObservationDomain toObservationDomain(Observation observation) throws SiloException {
+        String cameraName = observation.getCameraName();
+        Camera camera = serverBackend.getCamera(cameraName)
+                .orElseThrow(() -> new SiloException("Camera with name " + cameraName + " does not exist."));
         return new ObservationDomain(
                 parseObject(observation.getTarget(), observation.getId()),
                 new Timestamp(System.currentTimeMillis()),
-                serverBackend.getCamera(observation.getCameraName())
+                camera
         );
     }
 
     private Observation toObservation(ObservationDomain observationDomain) {
-        ObservationObject object = observationDomain.getObject();
+        ObservationObject object = observationDomain.getObservationObject();
         Target target = null;
         String id = null;
         if (object instanceof Car) {
@@ -107,20 +111,25 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     @Override
     public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
-        Camera camera = serverBackend.getCamera(request.getCameraName());
-        CamInfoResponse response = CamInfoResponse.newBuilder()
-                .setLatitude(camera.getLatitude())
-                .setLongitude(camera.getLongitude())
-                .build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        try {
+            String cameraName = request.getCameraName();
+            Camera camera = serverBackend.getCamera(cameraName)
+                    .orElseThrow(() -> new SiloException("Camera with name " + cameraName + " does not exist."));
+            CamInfoResponse response = CamInfoResponse.newBuilder()
+                    .setLatitude(camera.getLatitude())
+                    .setLongitude(camera.getLongitude())
+                    .build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (SiloException siloException) {
+            responseObserver.onError(getGRPCException(siloException));
+        }
     }
 
     @Override
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
         try {
             serverBackend.report(
-                    request.getCameraName(),
                     request.getObservationsList()
                             .stream()
                             .map(o -> o.toBuilder().setCameraName(request.getCameraName()).build())
@@ -138,9 +147,10 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     @Override
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
         try {
-            Observation observation = toObservation(
-                    serverBackend.track(parseObject(request.getTarget(), request.getId()))
-            );
+            Observation observation =
+                    serverBackend
+                            .track(parseObject(request.getTarget(), request.getId()))
+                            .map(this::toObservation).orElse(Observation.getDefaultInstance());
             TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -157,7 +167,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                                                 .stream()
                                                 .map(this::toObservation)
                                                 .collect(Collectors.toList());
-
             TrackMatchResponse response = TrackMatchResponse.newBuilder().addAllObservations(observations).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
