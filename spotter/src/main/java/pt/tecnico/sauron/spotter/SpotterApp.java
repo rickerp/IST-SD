@@ -1,6 +1,7 @@
 package pt.tecnico.sauron.spotter;
 
 
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
 import pt.tecnico.sauron.silo.grpc.*;
 
@@ -46,8 +47,12 @@ public class SpotterApp {
 				if (tokens[2].contains("*"))
 					spotMatch(tokens[1], tokens[2], client);
 
-				spot(tokens[1], tokens[2], client);
+				else
+					spot(tokens[1], tokens[2], client);
 			}
+
+			else
+				System.out.println("Invalid format: (spot|trail) type id");
 		}
 	}
 
@@ -63,13 +68,17 @@ public class SpotterApp {
 
 		trackRequest.setId(id);
 
-		TrackResponse response = client.track(trackRequest.build());
+		try {
+			TrackResponse response = client.track(trackRequest.build());
 
-		System.out.printf("%s,%s,%s,,,%n",
-				response.getObservation().getTarget().toString(),
-				response.getObservation().getId(),
-				response.getObservation().getTs().toString()
-		);
+			System.out.printf("%s,%s,%s,,,%n",
+					response.getObservation().getTarget().toString(),
+					response.getObservation().getId(),
+					response.getObservation().getTs().toString()
+			);
+		} catch (StatusRuntimeException e) {
+			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+		}
 	}
 
 	public static void spotMatch(String type, String id, SiloClientFrontend client) {
@@ -84,13 +93,18 @@ public class SpotterApp {
 
 		trackRequest.setId(id);
 
-		TrackMatchResponse response = client.trackMatch(trackRequest.build());
-
-		for(Observation obs: response.getObservationsList())
-			System.out.printf("%s,%s,%s,,,%n",
-					obs.getTarget().toString(),
-					obs.getId(),
-					obs.getTs().toString()
-			);
+		try {
+			TrackMatchResponse response = client.trackMatch(trackRequest.build());
+			
+			for (Observation obs : response.getObservationsList())
+				System.out.printf("%s,%s,%s,,,%n",
+						obs.getTarget().toString(),
+						obs.getId(),
+						obs.getTs().toString()
+				);
+		} catch (StatusRuntimeException e) {
+			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+		}
 	}
+
 }
