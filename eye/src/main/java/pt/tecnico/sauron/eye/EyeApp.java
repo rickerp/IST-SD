@@ -54,7 +54,9 @@ public class EyeApp {
 			if (line.isEmpty() || !scanner.hasNextLine()) {
 				if (!observations.isEmpty()) {
 					ReportRequest reportRequest = ReportRequest.newBuilder()
-							.addAllObservations(observations).build();
+							.addAllObservations(observations)
+							.setCameraName(cameraName)
+							.build();
 					client.report(reportRequest);
 					observations.clear();
 				}
