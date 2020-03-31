@@ -87,4 +87,5 @@ service Silo {
     rpc report(ReportRequest)       returns(ReportResponse);
     rpc track(TrackRequest)         returns(TrackResponse);
     rpc trackMatch(TrackRequest)    returns(TrackMatchResponse);
+    rpc trace(TrackRequest)         returns(TrackMatchResponse);
 }

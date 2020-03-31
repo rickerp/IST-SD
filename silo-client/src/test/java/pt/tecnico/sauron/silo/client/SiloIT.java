@@ -11,6 +11,7 @@ import javax.xml.crypto.dsig.keyinfo.KeyValue;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
@@ -19,6 +20,7 @@ public class SiloIT extends BaseIT {
 	// static members
 	// TODO
 	private final static String cameraName = "camera";
+	private final static String personId = "777";
 	
 	
 	// one-time initialization and clean-up
@@ -417,7 +419,6 @@ public class SiloIT extends BaseIT {
 						.build()
 		);
 
-		final String personId = "777";
 		final Observation observation = Observation.newBuilder()
 				.setTarget(Target.PERSON)
 				.setId(personId)
@@ -448,4 +449,31 @@ public class SiloIT extends BaseIT {
 		Assertions.assertEquals(camera2, response.getObservation().getCameraName());
 	}
 
+	@Test
+	public void traceReturnsCorrectSortedObservations() {
+		final int nObservations = 5;
+
+		for (int i = 0; i < nObservations; i++) {
+			client.camJoin(
+					CamJoinRequest.newBuilder().setCameraName(cameraName + i).setLatitude(0).setLongitude(0).build());
+		}
+
+		final Observation observation = Observation.newBuilder().setTarget(Target.PERSON).setId(personId).build();
+
+		for (int i = 0; i < nObservations; i++) {
+			client.report(
+					ReportRequest.newBuilder().setCameraName(cameraName + i).addObservations(observation).build());
+		}
+
+		TrackMatchResponse response = client
+				.trace(TrackRequest.newBuilder().setTarget(Target.PERSON).setId(personId).build());
+
+		Assertions.assertEquals(nObservations, response.getObservationsCount());
+
+		for (int i = 0; i < nObservations; i++) {
+			Assertions.assertEquals(cameraName + i,
+					response.getObservationsList().get(nObservations - 1 - i).getCameraName());
+
+		}
+	}
 }
