@@ -36,6 +36,10 @@ public class SiloClientFrontend {
         return stub.camInfo(camInfoRequest);
     }
 
+    public TrackMatchResponse trace(TrackRequest trackRequest) {
+        return stub.trace(trackRequest);
+    }
+
     public TrackResponse track(TrackRequest trackRequest) {
         return stub.track(trackRequest);
     }
@@ -49,4 +53,3 @@ public class SiloClientFrontend {
     }
 
 }
-

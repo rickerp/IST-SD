@@ -32,9 +32,7 @@ public class SiloServerBackend {
     }
 
     public Optional<Camera> getCamera(String cameraName) {
-        return cameras.stream()
-                .filter(x -> x.getName().equals(cameraName))
-                .findFirst();
+        return cameras.stream().filter(x -> x.getName().equals(cameraName)).findFirst();
     }
 
     public void camJoin(String name, float latitude, float longitude) {
@@ -44,22 +42,18 @@ public class SiloServerBackend {
         cameras.add(new Camera(name, latitude, longitude));
     }
 
-    public Optional<ObservationDomain> track(ObservationObject object) throws SiloException {
-        return observations.stream()
-                .filter(s -> s.getObservationObject().equals(object))
-                .max(Comparator.comparing(ObservationDomain::getTimestamp));
+    public List<ObservationDomain> trace(ObservationObject object) {
+        return observations.stream().filter(s -> s.getObservationObject().equals(object))
+                .sorted(Comparator.comparing(ObservationDomain::getTimestamp).reversed()).collect(Collectors.toList());
+    }
+
+    public Optional<ObservationDomain> track(ObservationObject object) {
+        return trace(object).stream().findFirst();
     }
 
     public List<ObservationDomain> trackMatch(Class<? extends ObservationObject> targetType, String idLike) {
-        return observations.stream()
-                .map(ObservationDomain::getObservationObject)
-                .filter(s -> s.getClass().equals(targetType) &&
-                             s.getStringId().matches(idLike.replace("*", ".*"))
-                )
-                .distinct()
-                .map(this::track)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+        return observations.stream().map(ObservationDomain::getObservationObject)
+                .filter(s -> s.getClass().equals(targetType) && s.getStringId().matches(idLike.replace("*", ".*")))
+                .distinct().map(this::track).map(Optional::get).collect(Collectors.toList());
     }
-    
 }
