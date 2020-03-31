@@ -64,13 +64,13 @@ public class SpotterApp {
 	public static void spot(String type, String id, SiloClientFrontend client) {
 		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
 
-		if (type.equals("person"))
-			trackRequest.setTarget(Target.PERSON);
-		else if (type.equals("car"))
-			trackRequest.setTarget(Target.CAR);
-		else
+		Target target = parseTarget(type);
+		if (target == null) {
 			System.out.println("Invalid type value. Types available: car, person");
+			return;
+		}
 
+		trackRequest.setTarget(target);
 		trackRequest.setId(id);
 
 		try {
@@ -86,13 +86,13 @@ public class SpotterApp {
 	public static void spotMatch(String type, String id, SiloClientFrontend client) {
 		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
 
-		if (type.equals("person"))
-			trackRequest.setTarget(Target.PERSON);
-		else if (type.equals("car"))
-			trackRequest.setTarget(Target.CAR);
-		else
-			System.out.println("Invalid type value. Types avaliable: car, person");
+		Target target = parseTarget(type);
+		if (target == null) {
+			System.out.println("Invalid type value. Types available: car, person");
+			return;
+		}
 
+		trackRequest.setTarget(target);
 		trackRequest.setId(id);
 
 		try {
@@ -109,13 +109,13 @@ public class SpotterApp {
 	public static void trail(String type, String id, SiloClientFrontend client) {
 		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
 
-		if (type.equals("person"))
-			trackRequest.setTarget(Target.PERSON);
-		else if (type.equals("car"))
-			trackRequest.setTarget(Target.CAR);
-		else
+		Target target = parseTarget(type);
+		if (target == null) {
 			System.out.println("Invalid type value. Types available: car, person");
+			return;
+		}
 
+		trackRequest.setTarget(target);
 		trackRequest.setId(id);
 
 		try {
@@ -146,5 +146,14 @@ public class SpotterApp {
 				camInfo.getLatitude(),
 				camInfo.getLongitude()
 		);
+	}
+
+	public static Target parseTarget(String target) {
+		if (target.equals("person"))
+			return Target.PERSON;
+		else if (target.equals("car"))
+			return Target.CAR;
+		else
+			return null;
 	}
 }
