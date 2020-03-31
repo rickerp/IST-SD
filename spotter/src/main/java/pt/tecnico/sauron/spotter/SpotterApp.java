@@ -5,7 +5,6 @@ import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
 import pt.tecnico.sauron.silo.grpc.*;
 
-import javax.sound.midi.SysexMessage;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Scanner;
@@ -53,6 +52,10 @@ public class SpotterApp {
 					spot(tokens[1], tokens[2], client);
 			}
 
+			else if (tokens[0].equals("trail")) {
+				trail(tokens[1], tokens[2], client);
+			}
+
 			else
 				System.out.println("Invalid format: (spot|trail) type id");
 		}
@@ -94,6 +97,29 @@ public class SpotterApp {
 
 		try {
 			TrackMatchResponse response = client.trackMatch(trackRequest.build());
+
+			for (Observation observation : response.getObservationsList())
+				printObservation(observation, client);
+
+		} catch (StatusRuntimeException e) {
+			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+		}
+	}
+
+	public static void trail(String type, String id, SiloClientFrontend client) {
+		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+
+		if (type.equals("person"))
+			trackRequest.setTarget(Target.PERSON);
+		else if (type.equals("car"))
+			trackRequest.setTarget(Target.CAR);
+		else
+			System.out.println("Invalid type value. Types available: car, person");
+
+		trackRequest.setId(id);
+
+		try {
+			TrackMatchResponse response = client.trace(trackRequest.build());
 
 			for (Observation observation : response.getObservationsList())
 				printObservation(observation, client);
