@@ -340,7 +340,7 @@ public class SiloIT extends BaseIT {
 		);
 
 		TrackMatchResponse response = client.trackMatch(
-				TrackRequest.newBuilder()
+				TrackMatchRequest.newBuilder()
 						.setId("2*")
 						.setTarget(Target.PERSON)
 						.build()
@@ -377,7 +377,7 @@ public class SiloIT extends BaseIT {
 		}
 
 		TrackMatchResponse response = client.trackMatch(
-			TrackRequest.newBuilder()
+			TrackMatchRequest.newBuilder()
 				.setTarget(Target.PERSON)
 				.setId("12345*")
 				.build()
@@ -412,7 +412,7 @@ public class SiloIT extends BaseIT {
 		}
 
 		TrackMatchResponse response = client.trackMatch(
-				TrackRequest.newBuilder()
+				TrackMatchRequest.newBuilder()
 						.setTarget(Target.PERSON)
 						.setId("1*")
 						.build()
@@ -489,8 +489,8 @@ public class SiloIT extends BaseIT {
 					ReportRequest.newBuilder().setCameraName(cameraName + i).addObservations(observation).build());
 		}
 
-		TrackMatchResponse response = client
-				.trace(TrackRequest.newBuilder().setTarget(Target.PERSON).setId(personId).build());
+		TraceResponse response = client
+				.trace(TraceRequest.newBuilder().setTarget(Target.PERSON).setId(personId).build());
 
 		Assertions.assertEquals(nObservations, response.getObservationsCount());
 
