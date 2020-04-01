@@ -40,12 +40,11 @@ public class SpotterApp {
 
 			String[] tokens = line.split(" ");
 
-			if (tokens.length != 3) {
-				System.out.println("Invalid format: (spot|trail) type id");
-				continue;
-			}
-
 			if (tokens[0].equals("spot")){
+				if (tokens.length != 3) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
 				if (tokens[2].contains("*"))
 					spotMatch(tokens[1], tokens[2], client);
 				else
@@ -53,11 +52,49 @@ public class SpotterApp {
 			}
 
 			else if (tokens[0].equals("trail")) {
+				if (tokens.length != 3) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
+
 				trail(tokens[1], tokens[2], client);
 			}
 
+			else if (tokens[0].equals("ping")) {
+				if (tokens.length != 1) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
+
+				client.ping();
+				System.out.println("Server is running");
+			}
+
+			else if (tokens[0].equals("clear")) {
+				if (tokens.length != 1) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
+
+				client.clear();
+			}
+
+			else if (tokens[0].equals("help")) {
+				if (tokens.length != 1) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
+
+				System.out.println("Available commands:\n" +
+						"spot TYPE ID      - prints the last observation of an object of a TYPE(person or car) with the respective ID. Where ID can have * to show all matchs\n" +
+						"trail TYPE ID     - prints all the observations of an object of a TYPE(person or car) with the respective ID\n" +
+						"ping              - checks if the server is running\n" +
+						"clear             - clears all the state of the server"
+						);
+			}
+
 			else
-				System.out.println("Invalid format: (spot|trail) type id");
+				System.out.println("Type help to see the documentation");
 		}
 	}
 
