@@ -95,7 +95,6 @@ public class EyeApp {
 			}
 
 			observations.add(observationBuilder.build());
-			System.out.println("added");
 		}
 
 	}
