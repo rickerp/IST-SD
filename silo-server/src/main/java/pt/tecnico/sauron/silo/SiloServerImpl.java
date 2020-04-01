@@ -11,7 +11,6 @@ import pt.tecnico.sauron.silo.domain.SiloException;
 import pt.tecnico.sauron.silo.grpc.*;
 
 import java.sql.Timestamp;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.List;
 
@@ -137,11 +136,11 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     }
 
     @Override
-    public void trace(TrackRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
+    public void trace(TraceRequest request, StreamObserver<TraceResponse> responseObserver) {
         try {
             List<Observation> observations = serverBackend.trace(parseObject(request.getTarget(), request.getId()))
                     .stream().map(this::toObservation).collect(Collectors.toList());
-            TrackMatchResponse response = TrackMatchResponse.newBuilder().addAllObservations(observations).build();
+            TraceResponse response = TraceResponse.newBuilder().addAllObservations(observations).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } catch (SiloException siloException) {
@@ -163,7 +162,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     }
 
     @Override
-    public void trackMatch(TrackRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
+    public void trackMatch(TrackMatchRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
         try {
             List<Observation> observations = serverBackend
                     .trackMatch(toDomainType(request.getTarget()), request.getId()).stream().map(this::toObservation)

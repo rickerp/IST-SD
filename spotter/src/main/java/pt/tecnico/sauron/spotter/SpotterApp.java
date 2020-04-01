@@ -121,7 +121,7 @@ public class SpotterApp {
 	}
 
 	public static void spotMatch(String type, String id, SiloClientFrontend client) {
-		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+		TrackMatchRequest.Builder trackRequest = TrackMatchRequest.newBuilder();
 
 		Target target = parseTarget(type);
 		if (target == null) {
@@ -144,7 +144,7 @@ public class SpotterApp {
 	}
 
 	public static void trail(String type, String id, SiloClientFrontend client) {
-		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+		TraceRequest.Builder trackRequest = TraceRequest.newBuilder();
 
 		Target target = parseTarget(type);
 		if (target == null) {
@@ -156,7 +156,7 @@ public class SpotterApp {
 		trackRequest.setId(id);
 
 		try {
-			TrackMatchResponse response = client.trace(trackRequest.build());
+			TraceResponse response = client.trace(trackRequest.build());
 
 			for (Observation observation : response.getObservationsList())
 				printObservation(observation, client);

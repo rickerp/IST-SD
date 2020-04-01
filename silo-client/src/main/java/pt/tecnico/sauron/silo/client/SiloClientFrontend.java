@@ -15,13 +15,12 @@ public class SiloClientFrontend {
         stub = SiloGrpc.newBlockingStub(channel);
     }
 
-    public void ping() {
-        // TODO: Calculate return time
-        PingResponse response = stub.ctrlPing(PingRequest.getDefaultInstance());
+    public PingResponse ping() {
+        return stub.ctrlPing(PingRequest.getDefaultInstance());
     }
 
-    public void clear() {
-        ClearResponse response = stub.ctrlClear(ClearRequest.getDefaultInstance());
+    public ClearResponse clear() {
+        return stub.ctrlClear(ClearRequest.getDefaultInstance());
     }
 
     public ReportResponse report(ReportRequest reportRequest) {
@@ -40,12 +39,12 @@ public class SiloClientFrontend {
         return stub.track(trackRequest);
     }
 
-    public TrackMatchResponse trackMatch(TrackRequest trackRequest) {
-        return stub.trackMatch(trackRequest);
+    public TrackMatchResponse trackMatch(TrackMatchRequest trackMatchRequest) {
+        return stub.trackMatch(trackMatchRequest);
     }
 
-    public TrackMatchResponse trace(TrackRequest trackRequest) {
-        return stub.trace(trackRequest);
+    public TraceResponse trace(TraceRequest traceRequest) {
+        return stub.trace(traceRequest);
     }
 
     public void end() {
