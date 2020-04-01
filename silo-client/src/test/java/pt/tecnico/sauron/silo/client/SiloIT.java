@@ -116,18 +116,42 @@ public class SiloIT extends BaseIT {
 	}
 
 	@Test
-	public void camJoinShouldNotAcceptRepeatedName() {
+	public void camJoinShouldBeIdempotent() {
 		client.camJoin(
 				CamJoinRequest.newBuilder()
 						.setCameraName(cameraName)
 						.setLatitude(0)
-						.setLongitude(0).build()
+						.setLongitude(0)
+						.build()
+		);
+
+		Assertions.assertDoesNotThrow(() -> {
+			client.camJoin(CamJoinRequest
+					.newBuilder()
+					.setCameraName(cameraName)
+					.setLongitude(0)
+					.setLatitude(0)
+					.build()
+			);
+		});
+	}
+
+	@Test
+	public void camJoinShouldNotAcceptRepeatedNameDifferentCoordinates() {
+		client.camJoin(
+				CamJoinRequest.newBuilder()
+						.setCameraName(cameraName)
+						.setLatitude(0)
+						.setLongitude(0)
+						.build()
 		);
 
 		Assertions.assertThrows(StatusRuntimeException.class, () -> {
 			client.camJoin(CamJoinRequest
 					.newBuilder()
 					.setCameraName(cameraName)
+					.setLongitude(1)
+					.setLatitude(1)
 					.build()
 			);
 		});

@@ -36,10 +36,11 @@ public class SiloServerBackend {
     }
 
     public void camJoin(String name, float latitude, float longitude) {
-        getCamera(name).ifPresent(cam -> {
-            throw new SiloException("Camera with name " + name + " already exists.");
-        });
-        cameras.add(new Camera(name, latitude, longitude));
+        getCamera(name).ifPresentOrElse(cam -> {
+            if (cam.getLatitude() != latitude || cam.getLongitude() != longitude) {
+                throw new SiloException("Camera with name " + name + " already exists.");
+            }
+        }, () -> cameras.add(new Camera(name, latitude, longitude)));
     }
 
     public List<ObservationDomain> trace(ObservationObject object) {
