@@ -1,10 +1,8 @@
 package pt.tecnico.sauron.eye;
 
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
-import pt.tecnico.sauron.silo.grpc.CamJoinRequest;
-import pt.tecnico.sauron.silo.grpc.Observation;
-import pt.tecnico.sauron.silo.grpc.ReportRequest;
-import pt.tecnico.sauron.silo.grpc.Target;
+import pt.tecnico.sauron.silo.grpc.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,28 +34,41 @@ public class EyeApp {
 
 		SiloClientFrontend client = new SiloClientFrontend(host, port);
 
-		client.camJoin(
-				CamJoinRequest.newBuilder()
-						.setCameraName(cameraName)
-						.setLatitude(latitude)
-						.setLongitude(longitude)
-						.build()
-		);
+		try {
+			client.camJoin(
+					CamJoinRequest.newBuilder()
+							.setCameraName(cameraName)
+							.setLatitude(latitude)
+							.setLongitude(longitude)
+							.build()
+			);
+		} catch (StatusRuntimeException e) {
+			System.out.println("camera join failed: " + e.getStatus().getDescription());
+			return;
+		}
 
 		Scanner scanner = new Scanner(System.in);
 		List<Observation> observations = new ArrayList<Observation>();
+		boolean hasNextLine = true;
 
-		while (scanner.hasNextLine()) {
+		while (hasNextLine) {
 
-			String line = scanner.nextLine().strip();
+			hasNextLine = scanner.hasNextLine();
+			String line;
 
-			if (line.isEmpty() || !scanner.hasNextLine()) {
+			if (!hasNextLine
+					|| (line = scanner.nextLine().strip()).isEmpty()
+			) {
 				if (!observations.isEmpty()) {
 					ReportRequest reportRequest = ReportRequest.newBuilder()
 							.addAllObservations(observations)
 							.setCameraName(cameraName)
 							.build();
-					client.report(reportRequest);
+					try {
+						client.report(reportRequest);
+					} catch (StatusRuntimeException e) {
+						System.out.println("report failed: " + e.getStatus().getDescription());
+					}
 					observations.clear();
 				}
 				continue;
@@ -85,6 +96,7 @@ public class EyeApp {
 
 			observations.add(observationBuilder.build());
 		}
+
 	}
 	
 }
