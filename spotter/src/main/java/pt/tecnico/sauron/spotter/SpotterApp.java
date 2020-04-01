@@ -5,7 +5,6 @@ import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
 import pt.tecnico.sauron.silo.grpc.*;
 
-import javax.sound.midi.SysexMessage;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Scanner;
@@ -41,33 +40,74 @@ public class SpotterApp {
 
 			String[] tokens = line.split(" ");
 
-			if (tokens.length != 3) {
-				System.out.println("Invalid format: (spot|trail) type id");
-				continue;
-			}
-
 			if (tokens[0].equals("spot")){
+				if (tokens.length != 3) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
 				if (tokens[2].contains("*"))
 					spotMatch(tokens[1], tokens[2], client);
 				else
 					spot(tokens[1], tokens[2], client);
 			}
 
+			else if (tokens[0].equals("trail")) {
+				if (tokens.length != 3) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
+
+				trail(tokens[1], tokens[2], client);
+			}
+
+			else if (tokens[0].equals("ping")) {
+				if (tokens.length != 1) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
+
+				client.ping();
+				System.out.println("Server is running");
+			}
+
+			else if (tokens[0].equals("clear")) {
+				if (tokens.length != 1) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
+
+				client.clear();
+			}
+
+			else if (tokens[0].equals("help")) {
+				if (tokens.length != 1) {
+					System.out.println("Wrong arguments. Type help to read the documentation");
+					continue;
+				}
+
+				System.out.println("Available commands:\n" +
+						"spot TYPE ID      - prints the last observation of an object of a TYPE(person or car) with the respective ID. Where ID can have * to show all matchs\n" +
+						"trail TYPE ID     - prints all the observations of an object of a TYPE(person or car) with the respective ID\n" +
+						"ping              - checks if the server is running\n" +
+						"clear             - clears all the state of the server"
+						);
+			}
+
 			else
-				System.out.println("Invalid format: (spot|trail) type id");
+				System.out.println("Type help to see the documentation");
 		}
 	}
 
 	public static void spot(String type, String id, SiloClientFrontend client) {
 		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
 
-		if (type.equals("person"))
-			trackRequest.setTarget(Target.PERSON);
-		else if (type.equals("car"))
-			trackRequest.setTarget(Target.CAR);
-		else
+		Target target = parseTarget(type);
+		if (target == null) {
 			System.out.println("Invalid type value. Types available: car, person");
+			return;
+		}
 
+		trackRequest.setTarget(target);
 		trackRequest.setId(id);
 
 		try {
@@ -83,17 +123,40 @@ public class SpotterApp {
 	public static void spotMatch(String type, String id, SiloClientFrontend client) {
 		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
 
-		if (type.equals("person"))
-			trackRequest.setTarget(Target.PERSON);
-		else if (type.equals("car"))
-			trackRequest.setTarget(Target.CAR);
-		else
-			System.out.println("Invalid type value. Types avaliable: car, person");
+		Target target = parseTarget(type);
+		if (target == null) {
+			System.out.println("Invalid type value. Types available: car, person");
+			return;
+		}
 
+		trackRequest.setTarget(target);
 		trackRequest.setId(id);
 
 		try {
 			TrackMatchResponse response = client.trackMatch(trackRequest.build());
+
+			for (Observation observation : response.getObservationsList())
+				printObservation(observation, client);
+
+		} catch (StatusRuntimeException e) {
+			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+		}
+	}
+
+	public static void trail(String type, String id, SiloClientFrontend client) {
+		TrackRequest.Builder trackRequest = TrackRequest.newBuilder();
+
+		Target target = parseTarget(type);
+		if (target == null) {
+			System.out.println("Invalid type value. Types available: car, person");
+			return;
+		}
+
+		trackRequest.setTarget(target);
+		trackRequest.setId(id);
+
+		try {
+			TrackMatchResponse response = client.trace(trackRequest.build());
 
 			for (Observation observation : response.getObservationsList())
 				printObservation(observation, client);
@@ -120,5 +183,14 @@ public class SpotterApp {
 				camInfo.getLatitude(),
 				camInfo.getLongitude()
 		);
+	}
+
+	public static Target parseTarget(String target) {
+		if (target.equals("person"))
+			return Target.PERSON;
+		else if (target.equals("car"))
+			return Target.CAR;
+		else
+			return null;
 	}
 }
