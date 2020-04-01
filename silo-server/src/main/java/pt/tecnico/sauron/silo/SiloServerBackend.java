@@ -15,37 +15,47 @@ import java.util.stream.Collectors;
 
 public class SiloServerBackend {
 
-    private List<ObservationDomain> observations = new ArrayList<>();
-    private List<Camera> cameras = new ArrayList<>();
+    private final List<ObservationDomain> observations = new ArrayList<>();
+    private final List<Camera> cameras = new ArrayList<>();
 
     public SiloServerBackend() {
 
     }
 
-    public void clear() {
+    public synchronized void clear() {
         observations.clear();
         cameras.clear();
     }
 
     public void report(List<ObservationDomain> newObservations) throws SiloException {
-        observations.addAll(newObservations);
+        synchronized (observations) {
+            observations.addAll(newObservations);
+        }
     }
 
     public Optional<Camera> getCamera(String cameraName) {
-        return cameras.stream().filter(x -> x.getName().equals(cameraName)).findFirst();
+        synchronized (cameras) {
+            return cameras.stream().filter(x -> x.getName().equals(cameraName)).findFirst();
+        }
     }
 
     public void camJoin(String name, float latitude, float longitude) {
-        getCamera(name).ifPresentOrElse(cam -> {
-            if (cam.getLatitude() != latitude || cam.getLongitude() != longitude) {
-                throw new SiloException("Camera with name " + name + " already exists.");
-            }
-        }, () -> cameras.add(new Camera(name, latitude, longitude)));
+        synchronized (cameras) {
+            getCamera(name).ifPresentOrElse(cam -> {
+                if (cam.getLatitude() != latitude || cam.getLongitude() != longitude) {
+                    throw new SiloException("Camera with name " + name + " already exists.");
+                }
+            }, () -> cameras.add(new Camera(name, latitude, longitude)));
+        }
     }
 
     public List<ObservationDomain> trace(ObservationObject object) {
-        return observations.stream().filter(s -> s.getObservationObject().equals(object))
-                .sorted(Comparator.comparing(ObservationDomain::getTimestamp).reversed()).collect(Collectors.toList());
+        synchronized (observations) {
+            return observations.stream()
+                    .filter(s -> s.getObservationObject().equals(object))
+                    .sorted(Comparator.comparing(ObservationDomain::getTimestamp).reversed())
+                    .collect(Collectors.toList());
+        }
     }
 
     public Optional<ObservationDomain> track(ObservationObject object) {
@@ -53,8 +63,15 @@ public class SiloServerBackend {
     }
 
     public List<ObservationDomain> trackMatch(Class<? extends ObservationObject> targetType, String idLike) {
-        return observations.stream().map(ObservationDomain::getObservationObject)
-                .filter(s -> s.getClass().equals(targetType) && s.getStringId().matches(idLike.replace("*", ".*")))
-                .distinct().map(this::track).map(Optional::get).collect(Collectors.toList());
+        synchronized (observations) {
+            return observations.stream()
+                    .map(ObservationDomain::getObservationObject)
+                    .filter(s -> s.getClass().equals(targetType) && s.getStringId()
+                    .matches(idLike.replace("*", ".*")))
+                    .distinct()
+                    .map(this::track)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+        }
     }
 }
