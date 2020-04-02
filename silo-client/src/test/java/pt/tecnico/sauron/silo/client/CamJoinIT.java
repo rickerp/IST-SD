@@ -64,5 +64,12 @@ public class CamJoinIT extends BaseIT {
         }
     }
 
-    
+    @Test
+    public void camJoinShouldBeIdempotent() {
+        client.camJoin(camRequest.build());
+
+        Assertions.assertDoesNotThrow(() -> {
+            client.camJoin(camRequest.build());
+        });
+    }
 }
