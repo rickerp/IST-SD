@@ -19,7 +19,7 @@ public class SiloIT extends BaseIT {
 
     private final static String cameraName = "camera";
     private final static String personId = "777";
-
+    private final static String plate = "00AA00";
 
     @BeforeAll
     public static void oneTimeSetUp() {
@@ -270,7 +270,7 @@ public class SiloIT extends BaseIT {
     }
 
     @Test
-    public void trackShouldReturnMostRecentObservation() {
+    public void trackShouldReturnCorrectObservationUsingID(){
         client.camJoin(
                 CamJoinRequest.newBuilder()
                         .setCameraName(cameraName)
@@ -279,20 +279,17 @@ public class SiloIT extends BaseIT {
                         .build()
         );
 
-        String personId = "123";
-        for (int i = 0; i < 3; ++i) {
-            client.report(
-                    ReportRequest.newBuilder()
-                            .setCameraName(cameraName)
-                            .addObservations(
-                                    Observation.newBuilder()
-                                            .setTarget(Target.PERSON)
-                                            .setId(personId)
-                                            .build()
-                            )
-                            .build()
-            );
-        }
+        client.report(
+                ReportRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .addObservations(
+                                Observation.newBuilder()
+                                        .setTarget(Target.PERSON)
+                                        .setId(personId)
+                                        .build()
+                        )
+                        .build()
+        );
 
         TrackResponse response = client.track(
                 TrackRequest.newBuilder()
@@ -302,7 +299,133 @@ public class SiloIT extends BaseIT {
         );
 
         Assertions.assertTrue(response.hasObservation());
-        Assertions.assertEquals(response.getObservation().getId(), personId);
+        Assertions.assertEquals(personId, response.getObservation().getId());
+        Assertions.assertEquals(Target.PERSON, response.getObservation().getTarget());
+        Assertions.assertEquals(cameraName, response.getObservation().getCameraName());
+    }
+
+    @Test
+    public void trackShouldReturnCorrectObservationUsingPlate(){
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .setLongitude(0)
+                        .setLatitude(0)
+                        .build()
+        );
+
+        client.report(
+                ReportRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .addObservations(
+                                Observation.newBuilder()
+                                        .setTarget(Target.CAR)
+                                        .setId(plate)
+                                        .build()
+                        )
+                        .build()
+        );
+
+        TrackResponse response = client.track(
+                TrackRequest.newBuilder()
+                        .setId(plate)
+                        .setTarget(Target.CAR)
+                        .build()
+        );
+
+        Assertions.assertTrue(response.hasObservation());
+        Assertions.assertEquals(plate, response.getObservation().getId());
+        Assertions.assertEquals(Target.CAR, response.getObservation().getTarget());
+        Assertions.assertEquals(cameraName, response.getObservation().getCameraName());
+    }
+
+    @Test
+    public void trackShouldReturnMostRecentObservation() {
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName + "1")
+                        .setLongitude(0)
+                        .setLatitude(0)
+                        .build()
+        );
+
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName + "2")
+                        .setLongitude(10)
+                        .setLatitude(10)
+                        .build()
+        );
+
+
+        String personId = "123";
+        client.report(
+                ReportRequest.newBuilder()
+                        .setCameraName(cameraName + "1")
+                        .addObservations(
+                                Observation.newBuilder()
+                                        .setTarget(Target.PERSON)
+                                        .setId(personId)
+                                        .build()
+                        )
+                        .build()
+        );
+
+        client.report(
+                ReportRequest.newBuilder()
+                        .setCameraName(cameraName + "2")
+                        .addObservations(
+                                Observation.newBuilder()
+                                        .setTarget(Target.PERSON)
+                                        .setId(personId)
+                                        .build()
+                        )
+                        .build()
+        );
+
+        TrackResponse response = client.track(
+                TrackRequest.newBuilder()
+                        .setId(personId)
+                        .setTarget(Target.PERSON)
+                        .build()
+        );
+
+        Assertions.assertTrue(response.hasObservation());
+        Assertions.assertEquals(personId, response.getObservation().getId());
+        Assertions.assertEquals(cameraName + "2", response.getObservation().getCameraName());
+    }
+
+    @Test
+    public void trackShouldReturnEmptyOnNonExistentID() {
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .setLongitude(0)
+                        .setLatitude(0)
+                        .build()
+        );
+
+        client.report(
+                ReportRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .addObservations(
+                                Observation.newBuilder()
+                                        .setId("123")
+                                        .setTarget(Target.PERSON)
+                                        .build()
+                        )
+                        .build()
+        );
+
+        TrackResponse response = client.track(
+                TrackRequest.newBuilder()
+                        .setId("2")
+                        .setTarget(Target.PERSON)
+                        .build()
+        );
+
+        assertTrue(response.hasObservation());
+
     }
 
     @Test
@@ -338,7 +461,7 @@ public class SiloIT extends BaseIT {
     }
 
     @Test
-    public void trackMatchShouldReturnCorrectObservations() {
+    public void trackMatchShouldReturnCorrectObservationsUsingID() {
         client.camJoin(
                 CamJoinRequest.newBuilder()
                         .setCameraName(cameraName)
@@ -368,6 +491,43 @@ public class SiloIT extends BaseIT {
                 TrackMatchRequest.newBuilder()
                         .setTarget(Target.PERSON)
                         .setId("12345*")
+                        .build()
+        );
+
+        assertEquals(i, response.getObservationsCount());
+    }
+
+    @Test
+    public void trackMatchShouldReturnCorrectObservationsUsingPlate(){
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .setLongitude(0)
+                        .setLatitude(0)
+                        .build()
+        );
+
+        String plate = "00AA0";
+        int i;
+        for (i = 0; i < 3; ++i) {
+            String plateaux = plate + i;
+            client.report(
+                    ReportRequest.newBuilder()
+                            .setCameraName(cameraName)
+                            .addObservations(
+                                    Observation.newBuilder()
+                                            .setTarget(Target.CAR)
+                                            .setId(plateaux)
+                                            .build()
+                            )
+                            .build()
+            );
+        }
+
+        TrackMatchResponse response = client.trackMatch(
+                TrackMatchRequest.newBuilder()
+                        .setTarget(Target.CAR)
+                        .setId("00AA0*")
                         .build()
         );
 
@@ -410,7 +570,7 @@ public class SiloIT extends BaseIT {
     }
 
     @Test
-    public void trackReturnsMostRecent() {
+    public void trackMatchReturnsMostRecent() {
 
         final String camera1 = cameraName + "1";
         final String camera2 = cameraName + "2";
@@ -426,8 +586,8 @@ public class SiloIT extends BaseIT {
         client.camJoin(
                 CamJoinRequest.newBuilder()
                         .setCameraName(camera2)
-                        .setLongitude(0)
-                        .setLongitude(0)
+                        .setLongitude(10)
+                        .setLongitude(10)
                         .build()
         );
 
@@ -451,18 +611,18 @@ public class SiloIT extends BaseIT {
         );
 
 
-        TrackResponse response = client.track(
-                TrackRequest.newBuilder()
+        TrackMatchResponse response = client.trackMatch(
+                TrackMatchRequest.newBuilder()
                         .setTarget(Target.PERSON)
-                        .setId(personId)
+                        .setId("7*")
                         .build()
         );
 
-        Assertions.assertEquals(camera2, response.getObservation().getCameraName());
+        Assertions.assertEquals(camera2, response.getObservationsList().get(0).getCameraName());
     }
 
     @Test
-	public void traceReturnsTimeOrderedObservations() {
+	public void traceReturnsTimeOrderedObservationsUsingID() {
 		final int nObservations = 5;
 
 		client.camJoin(
@@ -502,6 +662,95 @@ public class SiloIT extends BaseIT {
 		    Assertions.assertTrue(Timestamps.compare(ts[i], ts[i + 1]) >= 0);
         }
 	}
+
+    @Test
+    public void traceReturnsTimeOrderedObservationsUsingPlate() {
+        final int nObservations = 5;
+
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .setLatitude(0)
+                        .setLongitude(0)
+                        .build()
+        );
+
+        final Observation observation = Observation.newBuilder()
+                .setTarget(Target.CAR)
+                .setId(plate)
+                .build();
+
+        for (int i = 0; i < nObservations; i++) {
+            client.report(ReportRequest.newBuilder()
+                    .setCameraName(cameraName)
+                    .addObservations(observation)
+                    .build()
+            );
+        }
+
+        TraceResponse response = client.trace(
+                TraceRequest.newBuilder()
+                        .setTarget(Target.CAR)
+                        .setId(plate)
+                        .build()
+        );
+
+        Timestamp[] ts = response.getObservationsList()
+                .stream()
+                .map(Observation::getTs)
+                .toArray(Timestamp[]::new);
+
+        for (int i = 0; i < ts.length - 1; ++i) {
+            Assertions.assertTrue(Timestamps.compare(ts[i], ts[i + 1]) >= 0);
+        }
+    }
+
+    @Test
+    public void traceReturnsCorrectObservationsMultipleCamera() {
+        final int nObservations = 2;
+
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName + "1")
+                        .setLatitude(0)
+                        .setLongitude(0)
+                        .build()
+        );
+
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName + "2")
+                        .setLatitude(0)
+                        .setLongitude(0)
+                        .build()
+        );
+
+        final Observation observation = Observation.newBuilder()
+                .setTarget(Target.PERSON)
+                .setId(personId)
+                .build();
+
+        for (int i = 1; i <= nObservations;  i++) {
+            client.report(ReportRequest.newBuilder()
+                    .setCameraName(cameraName + i)
+                    .addObservations(observation)
+                    .build()
+            );
+        }
+
+        TraceResponse response = client.trace(
+                TraceRequest.newBuilder()
+                        .setTarget(Target.PERSON)
+                        .setId(personId)
+                        .build()
+        );
+
+        Assertions.assertEquals(nObservations, response.getObservationsCount());
+        Assertions.assertEquals(cameraName + "2", response.getObservationsList().get(0).getCameraName());
+        Assertions.assertEquals(cameraName + "1", response.getObservationsList().get(1).getCameraName());
+        Assertions.assertEquals(personId, response.getObservationsList().get(0).getId());
+        Assertions.assertEquals(personId, response.getObservationsList().get(1).getId());
+    }
 
 	@Test
     public void reportPersonShouldSucceed() {
