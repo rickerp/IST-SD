@@ -46,6 +46,18 @@ public class ReportIT extends BaseIT {
         });
     }
 
+    @Test
+    public void reportShouldSucceed() {
+        Assertions.assertDoesNotThrow(() -> {
+            client.report(
+                    ReportRequest.newBuilder()
+                            .setCameraName(cameraName)
+                            .addAllObservations(new ArrayList<>())
+                            .build()
+            );
+        });
+    }
+
     
 }
 
