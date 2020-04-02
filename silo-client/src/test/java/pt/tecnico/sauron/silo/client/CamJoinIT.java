@@ -72,4 +72,17 @@ public class CamJoinIT extends BaseIT {
             client.camJoin(camRequest.build());
         });
     }
+
+    @Test
+    public void camJoinShouldNotAcceptRepeatedNameDifferentCoordinates() {
+        client.camJoin(camRequest.build());
+
+        Assertions.assertThrows(StatusRuntimeException.class, () -> {
+            client.camJoin(camRequest
+                                .setLongitude(1)
+                                .setLatitude(1)
+                                .build()
+            );
+        });
+    }
 }
