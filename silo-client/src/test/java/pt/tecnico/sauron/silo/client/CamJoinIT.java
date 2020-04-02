@@ -46,5 +46,23 @@ public class CamJoinIT extends BaseIT {
         }
     }
 
+    @Test
+    public void camJoinShouldNotAcceptInvalidName() {
+        String[] invalidNames = new String[]{
+                "ab",
+                "abcdef%",
+                "fasokfsdfpaskdpfkspdkfskdfksdk"
+        };
+
+        for (String name : invalidNames) {
+            Assertions.assertThrows(StatusRuntimeException.class, () -> {
+                client.camJoin(camRequest
+                                    .setCameraName(name)
+                                    .build()
+                );
+            });
+        }
+    }
+
     
 }
