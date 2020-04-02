@@ -70,6 +70,23 @@ public class ReportIT extends BaseIT {
         });
     }
 
+    @Test
+    public void reportCarShouldFailWithInvalidPlate() {
+        final String plate = "a";
+
+        Assertions.assertThrows(StatusRuntimeException.class, () -> {
+            client.report(
+                    ReportRequest
+                            .newBuilder()
+                            .setCameraName(cameraName)
+                            .addObservations(
+                                    observationCar.setId(plate).build()
+                            )
+                            .build()
+            );
+        });
+    }
+
     
 }
 
