@@ -135,6 +135,11 @@ public class SpotterApp {
 		try {
 			TrackMatchResponse response = client.trackMatch(trackRequest.build());
 
+			if (response.getObservationsList().size() == 0) {
+				System.out.println("");
+				return;
+			}
+
 			for (Observation observation : response.getObservationsList())
 				printObservation(observation, client);
 
@@ -157,6 +162,11 @@ public class SpotterApp {
 
 		try {
 			TraceResponse response = client.trace(trackRequest.build());
+
+			if (response.getObservationsList().size() == 0) {
+				System.out.println("");
+				return;
+			}
 
 			for (Observation observation : response.getObservationsList())
 				printObservation(observation, client);
