@@ -98,7 +98,7 @@ public class EyeApp {
 
 			if (tokens[0].equals("person")) {
 				observationBuilder.setTarget(Target.PERSON);
-			} else if (tokens[1].equals("car")) {
+			} else if (tokens[0].equals("car")) {
 				observationBuilder.setTarget(Target.CAR);
 			} else {
 				System.out.println("Error: type should be car|person");
