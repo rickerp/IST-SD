@@ -30,6 +30,8 @@ public class BaseIT {
 			System.out.println(msg);
 			throw e;
 		}
+
+		client.clear();
 	}
 	
 	@AfterAll
