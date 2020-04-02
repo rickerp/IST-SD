@@ -11,8 +11,9 @@ public class TrackIT extends BaseIT {
     private final static String personId = "777";
     private final static String plate = "00AA00";
 
-    @Test
-    public void trackShouldReturnCorrectObservationUsingID(){
+    @Override
+    @BeforeEach
+    public void setUp() {
         client.camJoin(
                 CamJoinRequest.newBuilder()
                         .setCameraName(cameraName)
@@ -21,6 +22,16 @@ public class TrackIT extends BaseIT {
                         .build()
         );
 
+    }
+
+    @Override
+    @AfterEach
+    public void tearDown() {
+        client.clear();
+    }
+
+    @Test
+    public void trackShouldReturnCorrectObservationUsingID(){
         client.report(
                 ReportRequest.newBuilder()
                         .setCameraName(cameraName)
@@ -48,14 +59,6 @@ public class TrackIT extends BaseIT {
 
     @Test
     public void trackShouldReturnCorrectObservationUsingPlate(){
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(cameraName)
-                        .setLongitude(0)
-                        .setLatitude(0)
-                        .build()
-        );
-
         client.report(
                 ReportRequest.newBuilder()
                         .setCameraName(cameraName)
@@ -139,14 +142,6 @@ public class TrackIT extends BaseIT {
 
     @Test
     public void trackShouldReturnEmptyOnNonExistentID() {
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(cameraName)
-                        .setLongitude(0)
-                        .setLatitude(0)
-                        .build()
-        );
-
         client.report(
                 ReportRequest.newBuilder()
                         .setCameraName(cameraName)
@@ -170,197 +165,5 @@ public class TrackIT extends BaseIT {
 
     }
 
-    @Test
-    public void trackMatchShouldNotReturnUnaskedObservations() {
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(cameraName)
-                        .setLongitude(0)
-                        .setLatitude(0)
-                        .build()
-        );
-
-        client.report(
-                ReportRequest.newBuilder()
-                        .setCameraName(cameraName)
-                        .addObservations(
-                                Observation.newBuilder()
-                                        .setId("123")
-                                        .setTarget(Target.PERSON)
-                                        .build()
-                        )
-                        .build()
-        );
-
-        TrackMatchResponse response = client.trackMatch(
-                TrackMatchRequest.newBuilder()
-                        .setId("2*")
-                        .setTarget(Target.PERSON)
-                        .build()
-        );
-
-        assertEquals(0, response.getObservationsCount());
-    }
-
-    @Test
-    public void trackMatchShouldReturnCorrectObservationsUsingID() {
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(cameraName)
-                        .setLongitude(0)
-                        .setLatitude(0)
-                        .build()
-        );
-
-        String personId = null;
-        int i;
-        for (i = 0; i < 3; ++i) {
-            personId = "12345" + i;
-            client.report(
-                    ReportRequest.newBuilder()
-                            .setCameraName(cameraName)
-                            .addObservations(
-                                    Observation.newBuilder()
-                                            .setTarget(Target.PERSON)
-                                            .setId(personId)
-                                            .build()
-                            )
-                            .build()
-            );
-        }
-
-        TrackMatchResponse response = client.trackMatch(
-                TrackMatchRequest.newBuilder()
-                        .setTarget(Target.PERSON)
-                        .setId("12345*")
-                        .build()
-        );
-
-        assertEquals(i, response.getObservationsCount());
-    }
-
-    @Test
-    public void trackMatchShouldReturnCorrectObservationsUsingPlate(){
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(cameraName)
-                        .setLongitude(0)
-                        .setLatitude(0)
-                        .build()
-        );
-
-        String plate = "00AA0";
-        int i;
-        for (i = 0; i < 3; ++i) {
-            String plateaux = plate + i;
-            client.report(
-                    ReportRequest.newBuilder()
-                            .setCameraName(cameraName)
-                            .addObservations(
-                                    Observation.newBuilder()
-                                            .setTarget(Target.CAR)
-                                            .setId(plateaux)
-                                            .build()
-                            )
-                            .build()
-            );
-        }
-
-        TrackMatchResponse response = client.trackMatch(
-                TrackMatchRequest.newBuilder()
-                        .setTarget(Target.CAR)
-                        .setId("00AA0*")
-                        .build()
-        );
-
-        assertEquals(i, response.getObservationsCount());
-    }
-
-    @Test
-    public void trackMatchShouldReturnOneMostRecent() {
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(cameraName)
-                        .setLatitude(0)
-                        .setLongitude(0)
-                        .build()
-        );
-
-        final Observation observation = Observation.newBuilder()
-                .setTarget(Target.PERSON)
-                .setId("100")
-                .build();
-
-
-        for (int i = 0; i < 5; ++i) {
-            client.report(
-                    ReportRequest.newBuilder()
-                            .setCameraName(cameraName)
-                            .addObservations(observation)
-                            .build()
-            );
-        }
-
-        TrackMatchResponse response = client.trackMatch(
-                TrackMatchRequest.newBuilder()
-                        .setTarget(Target.PERSON)
-                        .setId("1*")
-                        .build()
-        );
-
-        Assertions.assertEquals(1, response.getObservationsCount());
-    }
-
-    @Test
-    public void trackMatchReturnsMostRecent() {
-
-        final String camera1 = cameraName + "1";
-        final String camera2 = cameraName + "2";
-
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(camera1)
-                        .setLatitude(0)
-                        .setLongitude(0)
-                        .build()
-        );
-
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(camera2)
-                        .setLongitude(10)
-                        .setLongitude(10)
-                        .build()
-        );
-
-        final Observation observation = Observation.newBuilder()
-                .setTarget(Target.PERSON)
-                .setId(personId)
-                .build();
-
-        client.report(
-                ReportRequest.newBuilder()
-                        .setCameraName(camera1)
-                        .addObservations(observation)
-                        .build()
-        );
-
-        client.report(
-                ReportRequest.newBuilder()
-                        .setCameraName(camera2)
-                        .addObservations(observation)
-                        .build()
-        );
-
-
-        TrackMatchResponse response = client.trackMatch(
-                TrackMatchRequest.newBuilder()
-                        .setTarget(Target.PERSON)
-                        .setId("7*")
-                        .build()
-        );
-
-        Assertions.assertEquals(camera2, response.getObservationsList().get(0).getCameraName());
-    }
 }
 

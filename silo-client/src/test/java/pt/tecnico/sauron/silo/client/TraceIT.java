@@ -11,17 +11,29 @@ public class TraceIT extends BaseIT {
     private final static String personId = "777";
     private final static String plate = "00AA00";
 
+    @Override
+    @BeforeEach
+    public void setUp() {
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .setLongitude(0)
+                        .setLatitude(0)
+                        .build()
+        );
+
+    }
+
+    @Override
+    @AfterEach
+    public void tearDown() {
+        client.clear();
+    }
+
+
     @Test
 	public void traceReturnsTimeOrderedObservationsUsingID() {
 		final int nObservations = 5;
-
-		client.camJoin(
-				CamJoinRequest.newBuilder()
-						.setCameraName(cameraName)
-						.setLatitude(0)
-						.setLongitude(0)
-						.build()
-		);
 
 		final Observation observation = Observation.newBuilder()
 				.setTarget(Target.PERSON)
@@ -56,14 +68,6 @@ public class TraceIT extends BaseIT {
     @Test
     public void traceReturnsTimeOrderedObservationsUsingPlate() {
         final int nObservations = 5;
-
-        client.camJoin(
-                CamJoinRequest.newBuilder()
-                        .setCameraName(cameraName)
-                        .setLatitude(0)
-                        .setLongitude(0)
-                        .build()
-        );
 
         final Observation observation = Observation.newBuilder()
                 .setTarget(Target.CAR)

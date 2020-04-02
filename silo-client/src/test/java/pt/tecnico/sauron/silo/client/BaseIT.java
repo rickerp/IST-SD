@@ -39,7 +39,7 @@ public class BaseIT {
 	}
 
 	@BeforeEach
-    public void setUp() { client.clear(); }
+    public void setUp() { }
 
     @AfterEach
     public void tearDown() { }
