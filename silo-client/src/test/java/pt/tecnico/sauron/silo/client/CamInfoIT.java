@@ -26,5 +26,16 @@ public class CamInfoIT extends BaseIT {
         );
     }
 
-    
+    @Test
+    public void camInfoShouldReturnCorrectCoordinates() {       
+
+        CamInfoResponse camInfoResponse = client.camInfo(
+                CamInfoRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .build()
+        );
+
+        assertEquals(camInfoResponse.getLatitude(), latitude, 0);
+        assertEquals(camInfoResponse.getLongitude(), longitude, 0);
+    }
 }
