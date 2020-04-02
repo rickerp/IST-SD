@@ -5,12 +5,10 @@ import pt.tecnico.sauron.silo.domain.ObservationDomain;
 import pt.tecnico.sauron.silo.domain.SiloException;
 import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SiloServerBackend {
@@ -18,16 +16,12 @@ public class SiloServerBackend {
     private final List<ObservationDomain> observations = new ArrayList<>();
     private final List<Camera> cameras = new ArrayList<>();
 
-    public SiloServerBackend() {
-
-    }
-
     public synchronized void clear() {
         observations.clear();
         cameras.clear();
     }
 
-    public void report(List<ObservationDomain> newObservations) throws SiloException {
+    public void report(List<ObservationDomain> newObservations) {
         synchronized (observations) {
             observations.addAll(newObservations);
         }
@@ -35,7 +29,9 @@ public class SiloServerBackend {
 
     public Optional<Camera> getCamera(String cameraName) {
         synchronized (cameras) {
-            return cameras.stream().filter(x -> x.getName().equals(cameraName)).findFirst();
+            return cameras.stream()
+                    .filter(x -> x.getName().equals(cameraName))
+                    .findFirst();
         }
     }
 

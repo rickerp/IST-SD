@@ -43,10 +43,14 @@ public class EyeApp {
 							.build()
 			);
 		} catch (StatusRuntimeException e) {
-			System.out.println("camera join failed: " + e.getStatus().getDescription());
+			System.out.println("Camera join failed: " + e.getStatus().getDescription());
 			return;
 		}
 
+		repl(cameraName, client);
+	}
+
+	private static void repl(String cameraName, SiloClientFrontend client) throws InterruptedException {
 		Scanner scanner = new Scanner(System.in);
 		List<Observation> observations = new ArrayList<Observation>();
 		boolean hasNextLine = true;
@@ -56,9 +60,7 @@ public class EyeApp {
 			hasNextLine = scanner.hasNextLine();
 			String line;
 
-			if (!hasNextLine
-					|| (line = scanner.nextLine().strip()).isEmpty()
-			) {
+			if (!hasNextLine || (line = scanner.nextLine().strip()).isEmpty()) {
 				if (!observations.isEmpty()) {
 					ReportRequest reportRequest = ReportRequest.newBuilder()
 							.addAllObservations(observations)
@@ -67,7 +69,8 @@ public class EyeApp {
 					try {
 						client.report(reportRequest);
 					} catch (StatusRuntimeException e) {
-						System.out.println("report failed: " + e.getStatus().getDescription());
+						System.out.println("Report failed: " + e.getStatus().getDescription());
+						return;
 					}
 					observations.clear();
 				}
@@ -84,6 +87,11 @@ public class EyeApp {
 				continue;
 			}
 
+			if (tokens.length != 2) {
+				System.out.println("Error: input should be `type,id`");
+				return;
+			}
+
 			Observation.Builder observationBuilder = Observation
 					.newBuilder()
 					.setId(tokens[1]);
@@ -92,11 +100,13 @@ public class EyeApp {
 				observationBuilder.setTarget(Target.PERSON);
 			} else if (tokens[1].equals("car")) {
 				observationBuilder.setTarget(Target.CAR);
+			} else {
+				System.out.println("Error: type should be car|person");
+				return;
 			}
 
 			observations.add(observationBuilder.build());
 		}
-
 	}
-	
+
 }

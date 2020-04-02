@@ -1,6 +1,5 @@
 package pt.tecnico.sauron.silo;
 
-
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
