@@ -1,8 +1,6 @@
 package pt.tecnico.sauron.silo.client;
 
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -14,7 +12,7 @@ public class BaseIT {
 	protected static SiloClientFrontend client;
 	
 	@BeforeAll
-	public static void oneTimeSetup () throws IOException {
+	public static void oneTimeSetup() throws IOException {
 		testProps = new Properties();
 		
 		try {
@@ -32,6 +30,8 @@ public class BaseIT {
 			System.out.println(msg);
 			throw e;
 		}
+
+		client.clear();
 	}
 	
 	@AfterAll
@@ -39,5 +39,11 @@ public class BaseIT {
 		client.clear();
 		client.end();
 	}
+
+	@BeforeEach
+    public void setUp() { }
+
+    @AfterEach
+    public void tearDown() { }
 
 }
