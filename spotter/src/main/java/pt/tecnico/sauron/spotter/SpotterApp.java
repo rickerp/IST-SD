@@ -34,7 +34,14 @@ public class SpotterApp {
 
 		Scanner scanner = new Scanner(System.in);
 
-		while (scanner.hasNextLine()) {
+		boolean hasNextLine = true;
+		while (hasNextLine) {
+
+			System.out.print("> ");
+			System.out.flush();
+
+			hasNextLine = scanner.hasNextLine();
+			if (!hasNextLine) break;
 
 			String line = scanner.nextLine();
 
