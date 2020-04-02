@@ -34,5 +34,18 @@ public class ReportIT extends BaseIT {
     }
     
 
+    @Test
+    public void reportShouldFailWithUnknownCameraName() {
+        Assertions.assertThrows(StatusRuntimeException.class, () -> {
+            client.report(
+                    ReportRequest.newBuilder()
+                            .setCameraName("notACamera")
+                            .addObservations(observationCar.build())
+                            .build()
+            );
+        });
+    }
+
+    
 }
 
