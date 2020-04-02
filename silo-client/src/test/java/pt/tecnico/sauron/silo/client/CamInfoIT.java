@@ -38,4 +38,15 @@ public class CamInfoIT extends BaseIT {
         assertEquals(camInfoResponse.getLatitude(), latitude, 0);
         assertEquals(camInfoResponse.getLongitude(), longitude, 0);
     }
+
+    @Test
+    public void camInfoShouldFailWithUnknownCameraName() {
+        Assertions.assertThrows(StatusRuntimeException.class, () -> {
+            client.camInfo(
+                    CamInfoRequest.newBuilder()
+                            .setCameraName("notACamera")
+                            .build()
+            );
+        });
+    }
 }
