@@ -6,7 +6,7 @@ public class Person extends ObservationObject {
 
     private long id;
 
-    public Person(int id) throws SiloException {
+    public Person(long id) throws SiloException {
         setId(id);
     }
 

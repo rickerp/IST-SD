@@ -42,7 +42,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 break;
             case PERSON:
                 try {
-                    object = new Person(Integer.parseInt(id));
+                    object = new Person(Long.parseUnsignedLong(id));
                 } catch (NumberFormatException e) {
                     throw new SiloException("Person's id must be a number.");
                 }
@@ -71,7 +71,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
             id = ((Car) object).getPlate();
         } else if (object instanceof Person) {
             target = Target.PERSON;
-            id = Long.toString(((Person) object).getId());
+            id = Long.toUnsignedString(((Person) object).getId());
         }
         return Observation.newBuilder().setId(id).setTarget(target)
                 .setCameraName(observationDomain.getCamera().getName()).setTs(com.google.protobuf.Timestamp.newBuilder()
