@@ -87,6 +87,25 @@ public class ReportIT extends BaseIT {
         });
     }
 
+    @Test
+    public void reportPersonShouldFailWithInvalidId() {
+        final String[] invalidIds = {
+                "x",
+                "-1",
+                "",
+        };
+
+        for (String id : invalidIds) {
+            Assertions.assertThrows(StatusRuntimeException.class, () -> {
+                client.report(
+                        ReportRequest.newBuilder()
+                                .setCameraName(cameraName)
+                                .addObservations(observationPerson.setId(id).build())
+                                .build()
+                );
+            });
+        }
+    }
 
 	@Test
     public void reportPersonShouldSucceed() {
