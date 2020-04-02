@@ -19,5 +19,12 @@ public class CamJoinIT extends BaseIT {
                             .setLatitude(0);
     }
 
+    @Test
+    public void camJoinShouldSucceed() {
+        Assertions.assertDoesNotThrow(() -> {
+            client.camJoin(camRequest.build());
+        });
+    }
+
     
 }
