@@ -87,6 +87,25 @@ public class ReportIT extends BaseIT {
         });
     }
 
-    
+
+	@Test
+    public void reportPersonShouldSucceed() {
+        final String[] validIds = {
+                "0",
+                "1",
+                "999999999999999999",
+        };
+
+        for (String id : validIds) {
+            Assertions.assertDoesNotThrow(() -> {
+                client.report(
+                        ReportRequest.newBuilder()
+                                .setCameraName(cameraName)
+                                .addObservations(observationPerson.setId(id).build())
+                                .build()
+                );
+            });
+        }
+    }
 }
 
