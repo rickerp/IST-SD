@@ -26,5 +26,25 @@ public class CamJoinIT extends BaseIT {
         });
     }
 
+    @Test
+    public void camJoinShouldNotAcceptInvalidCoordinates() {
+        final float[][] invalidCoordinates = new float[][]{
+                {-91, 0},
+                {0, -181},
+                {0, 181},
+                {91, 0},
+        };
+
+        for (float[] coords : invalidCoordinates) {
+            Assertions.assertThrows(StatusRuntimeException.class, () -> {
+                client.camJoin(camRequest
+                                    .setLatitude(coords[0])
+                                    .setLongitude(coords[1])
+                                    .build()
+                );
+            });
+        }
+    }
+
     
 }
