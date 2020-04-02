@@ -503,6 +503,72 @@ public class SiloIT extends BaseIT {
         }
 	}
 
+	@Test
+    public void reportPersonShouldSucceed() {
+        final String[] validIds = {
+                "0",
+                "1",
+                "999999999999999999",
+        };
+
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .setLatitude(0)
+                        .setLongitude(0)
+                        .build()
+        );
+
+        for (String id : validIds) {
+            Assertions.assertDoesNotThrow(() -> {
+                client.report(
+                        ReportRequest.newBuilder()
+                                .setCameraName(cameraName)
+                                .addObservations(
+                                        Observation.newBuilder()
+                                                .setTarget(Target.PERSON)
+                                                .setId(id)
+                                                .build()
+                                )
+                                .build()
+                );
+            });
+        }
+    }
+
+	@Test
+    public void reportPersonShouldFailWithInvalidId() {
+        final String[] invalidIds = {
+                "x",
+                "-1",
+                "",
+        };
+
+        client.camJoin(
+                CamJoinRequest.newBuilder()
+                        .setCameraName(cameraName)
+                        .setLatitude(0)
+                        .setLongitude(0)
+                        .build()
+        );
+
+        for (String id : invalidIds) {
+            Assertions.assertThrows(StatusRuntimeException.class, () -> {
+                client.report(
+                        ReportRequest.newBuilder()
+                                .setCameraName(cameraName)
+                                .addObservations(
+                                        Observation.newBuilder()
+                                                .setTarget(Target.PERSON)
+                                                .setId(id)
+                                                .build()
+                                )
+                                .build()
+                );
+            });
+        }
+    }
+
     @Test
     public void traceReturnsCorrectSortedObservations() {
         final int nObservations = 5;
