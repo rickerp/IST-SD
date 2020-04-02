@@ -58,6 +58,18 @@ public class ReportIT extends BaseIT {
         });
     }
 
+    @Test
+    public void reportCarShouldSucceed() {
+        Assertions.assertDoesNotThrow(() -> {
+            client.report(
+                    ReportRequest.newBuilder()
+                            .setCameraName(cameraName)
+                            .addObservations(observationCar.build())
+                            .build()
+            );
+        });
+    }
+
     
 }
 
