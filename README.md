@@ -25,7 +25,7 @@ Distributed Systems 2019-2020, 2nd semester project
 | T3       | track, trackMatch, trace      | _Ricardo Fernandes_ |
 | T4       | test T1                       | _Ricardo Fernandes_ |
 | T5       | test T2                       | _Afonso Matos_      |
-| T6       | test T3                       | _Tomás Lopes_       |
+| T6       | test T3                       | _João Tomás Lopes_  |
 
 
 ## Getting Started
