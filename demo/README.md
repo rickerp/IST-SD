@@ -10,7 +10,7 @@
 $ silo-server 8080
 ```
 
-1. Execute `eye` as shown in [../eye/README.md](../eye/README.md) for a certain input found in this directory.
+3. Execute `eye` as shown in [../eye/README.md](../eye/README.md) for a certain input found in this directory.
 
 **Example**
 ```sh
@@ -58,6 +58,7 @@ $ spotter localhost 8080
 > spot person 1*
 person,123,2020-04-03T09:58:57,Taguspark,-50.0,50.0
 person,189,2020-04-03T09:58:57,Taguspark,-50.0,50.0
+> clear
 > [ctrl-d]
 ```
 
@@ -67,6 +68,7 @@ $ eye localhost 8080 Taguspark -50 50 < input07.txt
 $ spotter localhost 8080
 > ping
 Server is running
+> clear
 > [ctrl-d]
 ```
 
@@ -98,12 +100,18 @@ person,123,2020-04-03T10:01:43,Taguspark,-50.0,50.0
 ```
 $ eye localhost 8080 Taguspark -50 50 < input05.txt
 Report failed: Person's id must be a number.
+$ spotter localhost 8080
+> clear
+> [ctrl-d]
 ```
 
 ### **invalid car plate**
 ```
 $ eye localhost 8080 Taguspark -50 50 < input06.txt
 Report failed: Plate has invalid formatting.
+$ spotter localhost 8080
+> clear
+> [ctrl-d]
 ```
 
 ### **multiple eyes**
