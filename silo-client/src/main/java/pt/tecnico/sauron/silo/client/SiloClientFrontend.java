@@ -15,6 +15,10 @@ public class SiloClientFrontend {
         stub = SiloGrpc.newBlockingStub(channel);
     }
 
+    public InitResponse init() {
+        return stub.ctrlInit(InitRequest.getDefaultInstance());
+    }
+
     public PingResponse ping() {
         return stub.ctrlPing(PingRequest.getDefaultInstance());
     }

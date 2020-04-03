@@ -20,6 +20,11 @@ message Observation {
 }
 //#endregion
 
+//#region init
+message InitRequest {}
+message InitResponse {}
+//#endregion
+
 //#region ping
 message PingRequest {}
 message PingResponse {}
@@ -94,6 +99,7 @@ message TraceResponse {
 //#endregion
 
 service Silo {
+    rpc ctrl_init(InitRequest)          returns(InitResponse);
     rpc cam_info(CamInfoRequest)        returns(CamInfoResponse);
     rpc cam_join(CamJoinRequest)        returns(CamJoinResponse);
     rpc ctrl_clear(ClearRequest)        returns(ClearResponse);

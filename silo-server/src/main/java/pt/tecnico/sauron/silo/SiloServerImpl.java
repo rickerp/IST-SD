@@ -85,6 +85,13 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     }
 
     @Override
+    public void ctrlInit(InitRequest request, StreamObserver<InitResponse> responseObserver) {
+        InitResponse response = InitResponse.newBuilder().build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void ctrlPing(PingRequest request, StreamObserver<PingResponse> responseObserver) {
         PingResponse response = PingResponse.newBuilder().build();
         responseObserver.onNext(response);

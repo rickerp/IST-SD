@@ -11,6 +11,10 @@ import java.util.Scanner;
 
 public class SpotterApp {
 
+	public static final String wrongArgsMessage = "Wrong arguments. Type help to read the documentation";
+	public static final String wrongTypeMessage = "Invalid type value. Types available: car, person";
+	public static final String exceptionMessage = "Caught exception with description: ";
+
 	public static void main(String[] args) {
 		System.out.println(SpotterApp.class.getSimpleName());
 
@@ -49,7 +53,7 @@ public class SpotterApp {
 
 			if (tokens[0].equals("spot")){
 				if (tokens.length != 3) {
-					System.out.println("Wrong arguments. Type help to read the documentation");
+					System.out.println(wrongArgsMessage);
 					continue;
 				}
 				if (tokens[2].contains("*"))
@@ -60,7 +64,7 @@ public class SpotterApp {
 
 			else if (tokens[0].equals("trail")) {
 				if (tokens.length != 3) {
-					System.out.println("Wrong arguments. Type help to read the documentation");
+					System.out.println(wrongArgsMessage);
 					continue;
 				}
 
@@ -69,7 +73,7 @@ public class SpotterApp {
 
 			else if (tokens[0].equals("ping")) {
 				if (tokens.length != 1) {
-					System.out.println("Wrong arguments. Type help to read the documentation");
+					System.out.println(wrongArgsMessage);
 					continue;
 				}
 
@@ -77,9 +81,18 @@ public class SpotterApp {
 				System.out.println("Server is running");
 			}
 
+			else if (tokens[0].equals("init")) {
+				if (tokens.length != 1) {
+					System.out.println(wrongArgsMessage);
+					continue;
+				}
+
+				client.init();
+			}
+
 			else if (tokens[0].equals("clear")) {
 				if (tokens.length != 1) {
-					System.out.println("Wrong arguments. Type help to read the documentation");
+					System.out.println(wrongArgsMessage);
 					continue;
 				}
 
@@ -88,7 +101,7 @@ public class SpotterApp {
 
 			else if (tokens[0].equals("help")) {
 				if (tokens.length != 1) {
-					System.out.println("Wrong arguments. Type help to read the documentation");
+					System.out.println(wrongArgsMessage);
 					continue;
 				}
 
@@ -96,7 +109,8 @@ public class SpotterApp {
 						"spot TYPE ID      - prints the last observation of an object of a TYPE(person or car) with the respective ID. Where ID can have * to show all matchs\n" +
 						"trail TYPE ID     - prints all the observations of an object of a TYPE(person or car) with the respective ID\n" +
 						"ping              - checks if the server is running\n" +
-						"clear             - clears all the state of the server"
+						"clear             - clears all the state of the server\n"+
+						"init              - initializes the server"
 						);
 			}
 
@@ -110,7 +124,7 @@ public class SpotterApp {
 
 		Target target = parseTarget(type);
 		if (target == null) {
-			System.out.println("Invalid type value. Types available: car, person");
+			System.out.println(wrongTypeMessage);
 			return;
 		}
 
@@ -123,7 +137,7 @@ public class SpotterApp {
 			printObservation(response.getObservation(), client);
 
 		} catch (StatusRuntimeException e) {
-			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+			System.out.println(exceptionMessage + e.getStatus().getDescription());
 		}
 	}
 
@@ -132,7 +146,7 @@ public class SpotterApp {
 
 		Target target = parseTarget(type);
 		if (target == null) {
-			System.out.println("Invalid type value. Types available: car, person");
+			System.out.println(wrongTypeMessage);
 			return;
 		}
 
@@ -151,7 +165,7 @@ public class SpotterApp {
 				printObservation(observation, client);
 
 		} catch (StatusRuntimeException e) {
-			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+			System.out.println(exceptionMessage + e.getStatus().getDescription());
 		}
 	}
 
@@ -160,7 +174,7 @@ public class SpotterApp {
 
 		Target target = parseTarget(type);
 		if (target == null) {
-			System.out.println("Invalid type value. Types available: car, person");
+			System.out.println(wrongTypeMessage);
 			return;
 		}
 
@@ -179,7 +193,7 @@ public class SpotterApp {
 				printObservation(observation, client);
 
 		} catch (StatusRuntimeException e) {
-			System.out.println("Caught exception with description: " + e.getStatus().getDescription());
+			System.out.println(exceptionMessage + e.getStatus().getDescription());
 		}
 	}
 
