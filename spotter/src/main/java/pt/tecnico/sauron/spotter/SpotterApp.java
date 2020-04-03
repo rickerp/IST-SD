@@ -7,7 +7,10 @@ import pt.tecnico.sauron.silo.grpc.*;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class SpotterApp {
 
@@ -161,7 +164,12 @@ public class SpotterApp {
 				return;
 			}
 
-			for (Observation observation : response.getObservationsList())
+			List<Observation> observations = response.getObservationsList()
+						.stream()
+						.sorted(Comparator.comparing(Observation::getId))
+						.collect(Collectors.toList());
+
+			for (Observation observation : observations)
 				printObservation(observation, client);
 
 		} catch (StatusRuntimeException e) {
