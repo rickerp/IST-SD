@@ -25,13 +25,13 @@ mvn install
 To run using appassembler plugin on Linux:
 
 ```
-./target/appassembler/bin/spotter arg0 arg1 arg2
+./target/appassembler/bin/spotter server port
 ```
 
 To run using appassembler plugin on Windows:
 
 ```
-target\appassembler\bin\spotter arg0 arg1 arg2
+target\appassembler\bin\spotter server port
 ```
 
 
