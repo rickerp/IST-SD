@@ -7,10 +7,11 @@ import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
 import pt.tecnico.sauron.silo.domain.ObservationObject.Person;
 import pt.tecnico.sauron.silo.domain.ObservationDomain;
 import pt.tecnico.sauron.silo.domain.Camera;
-import pt.tecnico.sauron.silo.domain.SiloException;
+import pt.tecnico.sauron.silo.domain.exception.*;
 import pt.tecnico.sauron.silo.grpc.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.List;
 
@@ -18,8 +19,26 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     private SiloServerBackend serverBackend = new SiloServerBackend();
 
-    private io.grpc.StatusRuntimeException getGRPCException(SiloException siloException) {
-        return Status.INVALID_ARGUMENT.withDescription(siloException.getMessage()).asRuntimeException();
+    private io.grpc.StatusRuntimeException getGRPCException(Exception exception) {
+        Status status = Status.INTERNAL.withDescription("An unknown error occurred.");
+        if (exception instanceof CamAlreadyExistsException) {
+            status = Status.ALREADY_EXISTS.withDescription(
+                    exception.getMessage()
+            );
+        } else if (exception instanceof CamNotFoundException) {
+            status = Status.NOT_FOUND.withDescription(
+                    exception.getMessage()
+            );
+        } else if (exception instanceof SiloArgumentException) {
+            status = Status.INVALID_ARGUMENT.withDescription(
+                    exception.getMessage()
+            );
+        } else if (exception instanceof CoordinateException) {
+            status = Status.OUT_OF_RANGE.withDescription(
+                    exception.getMessage()
+            );
+        }
+        return status.asRuntimeException();
     }
 
     private Class<? extends ObservationObject> toDomainType(Target target) {
@@ -34,7 +53,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     }
 
-    private ObservationObject parseObject(Target target, String id) {
+    private ObservationObject parseObject(Target target, String id) throws SiloArgumentException {
         ObservationObject object = null;
         switch (target) {
             case CAR:
@@ -44,21 +63,19 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 try {
                     object = new Person(Long.parseUnsignedLong(id));
                 } catch (NumberFormatException e) {
-                    throw new SiloException("Person's id must be a number.");
+                    throw new SiloArgumentException("Person's id must be a number.");
                 }
                 break;
         }
         if (object == null) {
-            throw new SiloException("Type of object not recognized.");
+            throw new SiloArgumentException("Type of object not recognized.");
         }
         return object;
     }
 
-    private ObservationDomain toObservationDomain(Observation observation) {
+    private ObservationDomain toObservationDomain(Observation observation) throws CamNotFoundException, SiloArgumentException {
         String cameraName = observation.getCameraName();
-        Camera camera = serverBackend
-                .getCamera(cameraName)
-                .orElseThrow(() -> new SiloException("Camera with name " + cameraName + " does not exist."));
+        Camera camera = serverBackend.getCamera(cameraName);
         return new ObservationDomain(
                 parseObject(observation.getTarget(), observation.getId()),
                 new Timestamp(System.currentTimeMillis()),
@@ -86,24 +103,36 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     @Override
     public void ctrlInit(InitRequest request, StreamObserver<InitResponse> responseObserver) {
-        InitResponse response = InitResponse.newBuilder().build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        try {
+            InitResponse response = InitResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
+        }
     }
 
     @Override
     public void ctrlPing(PingRequest request, StreamObserver<PingResponse> responseObserver) {
-        PingResponse response = PingResponse.newBuilder().build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
+        try {
+            PingResponse response = PingResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
+        }
+}
 
     @Override
     public void ctrlClear(ClearRequest request, StreamObserver<ClearResponse> responseObserver) {
-        serverBackend.clear();
-        ClearResponse response = ClearResponse.newBuilder().build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        try {
+            serverBackend.clear();
+            ClearResponse response = ClearResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
+        }
     }
 
     @Override
@@ -113,8 +142,8 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
             CamJoinResponse response = CamJoinResponse.getDefaultInstance();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (SiloException siloException) {
-            responseObserver.onError(getGRPCException(siloException));
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
         }
     }
 
@@ -122,30 +151,33 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
         try {
             String cameraName = request.getCameraName();
-            Camera camera = serverBackend.getCamera(cameraName)
-                    .orElseThrow(() -> new SiloException("Camera with name " + cameraName + " does not exist."));
+            Camera camera = serverBackend.getCamera(cameraName);
             CamInfoResponse response = CamInfoResponse.newBuilder()
                     .setLatitude(camera.getLatitude())
                     .setLongitude(camera.getLongitude())
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (SiloException siloException) {
-            responseObserver.onError(getGRPCException(siloException));
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
         }
     }
 
     @Override
     public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
         try {
-            serverBackend.report(request.getObservationsList().stream()
-                    .map(o -> o.toBuilder().setCameraName(request.getCameraName()).build())
-                    .map(this::toObservationDomain).collect(Collectors.toList()));
+            List<ObservationDomain> list = new ArrayList<>();
+            for (Observation o : request.getObservationsList()) {
+                Observation build = o.toBuilder().setCameraName(request.getCameraName()).build();
+                ObservationDomain observationDomain = toObservationDomain(build);
+                list.add(observationDomain);
+            }
+            serverBackend.report(list);
             ReportResponse response = ReportResponse.getDefaultInstance();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (SiloException siloException) {
-            responseObserver.onError(getGRPCException(siloException));
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
         }
     }
 
@@ -160,8 +192,8 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
             TraceResponse response = TraceResponse.newBuilder().addAllObservations(observations).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (SiloException siloException) {
-            responseObserver.onError(getGRPCException(siloException));
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
         }
     }
 
@@ -175,8 +207,8 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
             TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (SiloException siloException) {
-            responseObserver.onError(getGRPCException(siloException));
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
         }
     }
 
@@ -191,8 +223,8 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
             TrackMatchResponse response = TrackMatchResponse.newBuilder().addAllObservations(observations).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-        } catch (SiloException siloException) {
-            responseObserver.onError(getGRPCException(siloException));
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
         }
     }
 
