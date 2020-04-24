@@ -6,11 +6,15 @@ import "google/protobuf/timestamp.proto";
 package pt.tecnico.sauron.silo.grpc;
 option java_multiple_files = true;
 
+// TODO: Add vector timestamp to requests and responses
+
 //#region shared
 enum Target {
     CAR = 0;
     PERSON = 1;
 }
+
+
 
 message Observation {
     Target target  = 1;
@@ -31,7 +35,10 @@ message PingResponse {}
 //#endregion
 
 //#region clear
-message ClearRequest {}
+message ClearRequest {
+    repeated uint32 timestamp = 1;
+    string id = 4;
+}
 message ClearResponse {}
 //#endregion
 
@@ -98,6 +105,51 @@ message TraceResponse {
 }
 //#endregion
 
+//# Gossip modifications
+message QueryRequest {
+    repeated uint32 timestamp = 1;
+    oneof Operation {
+        TrackRequest trackRequest = 2;
+        TrackMatchRequest trackMatchRequest = 3;
+    }
+}
+
+message QueryResponse {
+    repeated uint32 timestamp = 1;
+    oneof Response {
+        TrackResponse trackResponse = 2;
+        TrackMatchResponse trackMatchResponse = 3;
+    }
+}
+
+message UpdateRequest {
+    repeated uint32 timestamp = 1;
+    string id = 2;
+    oneof Operation {
+        ClearRequest clearRequest = 3;
+        ReportRequest reportRequest = 4;
+    }
+}
+
+message LogRecord {
+    uint32 replica = 1;
+    repeated uint32 timestamp = 2;
+    UpdateRequest updateRequest = 3;
+}
+
+message UpdateResponse {
+   repeated uint32 timestamp = 1;
+}
+
+message GossipRequest {
+    uint32 timestamp = 1;
+    repeated LogRecord log = 2;
+}
+
+message GossipResponse {
+
+}
+
 service Silo {
     rpc ctrl_init(InitRequest)          returns(InitResponse);
     rpc cam_info(CamInfoRequest)        returns(CamInfoResponse);
@@ -108,4 +160,8 @@ service Silo {
     rpc track(TrackRequest)             returns(TrackResponse);
     rpc trackMatch(TrackMatchRequest)   returns(TrackMatchResponse);
     rpc trace(TraceRequest)             returns(TraceResponse);
+    rpc update(UpdateRequest)           returns(UpdateResponse);
+
+    rpc query(QueryRequest)             returns(QueryResponse);
+    rpc gossip(GossipRequest)           returns(GossipResponse);
 }
