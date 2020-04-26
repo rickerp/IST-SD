@@ -1,12 +1,12 @@
 package pt.tecnico.sauron.silo.domain.ObservationObject;
 
-import pt.tecnico.sauron.silo.domain.SiloException;
+import pt.tecnico.sauron.silo.domain.exception.SiloArgumentException;
 
 public class Person extends ObservationObject {
 
     private long id;
 
-    public Person(long id) throws SiloException {
+    public Person(long id) throws SiloArgumentException {
         setId(id);
     }
 
@@ -19,9 +19,9 @@ public class Person extends ObservationObject {
         return Long.toString(id);
     }
 
-    public void setId(long id) throws SiloException {
+    public void setId(long id) throws SiloArgumentException {
         if (id < 0) {
-            throw new SiloException("Person id should be >= 0");
+            throw new SiloArgumentException("Person id should be >= 0");
         }
         this.id = id;
     }

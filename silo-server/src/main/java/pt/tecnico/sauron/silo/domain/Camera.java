@@ -2,9 +2,9 @@ package pt.tecnico.sauron.silo.domain;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
+import pt.tecnico.sauron.silo.domain.exception.CoordinateException;
+import pt.tecnico.sauron.silo.domain.exception.SiloArgumentException;
 
 public class Camera {
 
@@ -14,7 +14,7 @@ public class Camera {
     private float latitude;
     private float longitude;
 
-    public Camera(String name, float latitude, float longitude) throws SiloException {
+    public Camera(String name, float latitude, float longitude) throws SiloArgumentException, CoordinateException {
         setName(name);
         setLatitude(latitude);
         setLongitude(longitude);
@@ -24,9 +24,9 @@ public class Camera {
         return latitude;
     }
 
-    public void setLatitude(float latitude) throws SiloException {
+    public void setLatitude(float latitude) throws CoordinateException {
         if (latitude < -90 || latitude > 90) {
-            throw new SiloException("Latitude must be between -90 and 90");
+            throw new CoordinateException("Latitude must be between -90 and 90");
         }
         this.latitude = latitude;
     }
@@ -35,9 +35,9 @@ public class Camera {
         return name;
     }
 
-    public void setName(String name) throws SiloException {
+    public void setName(String name) throws SiloArgumentException {
         if (!name.matches("^[a-zA-Z0-9]{3,15}$")) {
-            throw new SiloException("Camera name should be alphanumeric and its length between 3 and 5.");
+            throw new SiloArgumentException("Camera name should be alphanumeric and its length between 3 and 5.");
         }
         this.name = name;
     }
@@ -46,9 +46,9 @@ public class Camera {
         return longitude;
     }
 
-    public void setLongitude(float longitude) throws SiloException {
+    public void setLongitude(float longitude) throws CoordinateException {
         if (longitude < -180 || longitude > 180) {
-            throw new SiloException("Longitude must be between -180 and 180");
+            throw new CoordinateException("Longitude must be between -180 and 180");
         }
         this.longitude = longitude;
     }
