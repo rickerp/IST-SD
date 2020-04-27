@@ -1,6 +1,5 @@
 package pt.tecnico.sauron.spotter;
 
-
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.client.SiloClientFrontend;
 import pt.tecnico.sauron.silo.grpc.*;
@@ -48,13 +47,14 @@ public class SpotterApp {
 			System.out.flush();
 
 			hasNextLine = scanner.hasNextLine();
-			if (!hasNextLine) break;
+			if (!hasNextLine)
+				break;
 
 			String line = scanner.nextLine();
 
 			String[] tokens = line.split(" ");
 
-			if (tokens[0].equals("spot")){
+			if (tokens[0].equals("spot")) {
 				if (tokens.length != 3) {
 					System.out.println(wrongArgsMessage);
 					continue;
@@ -108,13 +108,12 @@ public class SpotterApp {
 					continue;
 				}
 
-				System.out.println("Available commands:\n" +
-						"spot TYPE ID      - prints the last observation of an object of a TYPE(person or car) with the respective ID. Where ID can have * to show all matchs\n" +
-						"trail TYPE ID     - prints all the observations of an object of a TYPE(person or car) with the respective ID\n" +
-						"ping              - checks if the server is running\n" +
-						"clear             - clears all the state of the server\n"+
-						"init              - initializes the server"
-						);
+				System.out.println("Available commands:\n"
+						+ "spot TYPE ID      - prints the last observation of an object of a TYPE(person or car) with the respective ID. Where ID can have * to show all matchs\n"
+						+ "trail TYPE ID     - prints all the observations of an object of a TYPE(person or car) with the respective ID\n"
+						+ "ping              - checks if the server is running\n"
+						+ "clear             - clears all the state of the server\n"
+						+ "init              - initializes the server");
 			}
 
 			else
@@ -164,10 +163,11 @@ public class SpotterApp {
 				return;
 			}
 
-			List<Observation> observations = response.getObservationsList()
-						.stream()
-						.sorted(Comparator.comparing(Observation::getId))
-						.collect(Collectors.toList());
+			List<Observation> observations = type.equals("person")
+					? response.getObservationsList().stream().sorted(Comparator.comparingInt(p->Integer.parseInt(p.getId())))
+							.collect(Collectors.toList())
+					: response.getObservationsList().stream().sorted(Comparator.comparing(Observation::getId))
+							.collect(Collectors.toList());
 
 			for (Observation observation : observations)
 				printObservation(observation, client);
@@ -214,14 +214,11 @@ public class SpotterApp {
 
 		CamInfoResponse camInfo = client.camInfo(CamInfoRequest.newBuilder().setCameraName(cameraName).build());
 
-		System.out.printf("%s,%s,%s,%s,%s,%s%n",
-				observation.getTarget().toString().toLowerCase(),
-				observation.getId(),
-				Instant.ofEpochSecond(observation.getTs().getSeconds()).atZone(ZoneId.systemDefault()).toLocalDateTime().toString(),
-				observation.getCameraName(),
-				camInfo.getLatitude(),
-				camInfo.getLongitude()
-		);
+		System.out
+				.printf("%s,%s,%s,%s,%s,%s%n", observation.getTarget().toString().toLowerCase(), observation.getId(),
+						Instant.ofEpochSecond(observation.getTs().getSeconds()).atZone(ZoneId.systemDefault())
+								.toLocalDateTime().toString(),
+						observation.getCameraName(), camInfo.getLatitude(), camInfo.getLongitude());
 	}
 
 	public static Target parseTarget(String target) {
