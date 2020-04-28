@@ -20,7 +20,7 @@
 
 		<mainclass>pt.tecnico.sauron.silo.client.SiloClientApp</mainclass>
 		<server.host>localhost</server.host>
-		<server.port>8080</server.port>
+		<server.port>2181</server.port>
 	</properties>
 
 	<dependencies>

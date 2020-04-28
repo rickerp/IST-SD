@@ -6,15 +6,11 @@ import "google/protobuf/timestamp.proto";
 package pt.tecnico.sauron.silo.grpc;
 option java_multiple_files = true;
 
-// TODO: Add vector timestamp to requests and responses
-
 //#region shared
 enum Target {
     CAR = 0;
     PERSON = 1;
 }
-
-
 
 message Observation {
     Target target  = 1;
@@ -40,7 +36,7 @@ message ClearRequest {
     string id = 4;
 }
 message ClearResponse {}
-//#endregion
+
 
 //#region report
 message ReportRequest {
@@ -105,7 +101,7 @@ message TraceResponse {
 }
 //#endregion
 
-//# Gossip modifications
+//#region Gossip modifications
 message QueryRequest {
     repeated uint32 timestamp = 1;
     oneof Operation {
@@ -149,6 +145,7 @@ message GossipRequest {
 message GossipResponse {
 
 }
+//#endregion
 
 service Silo {
     rpc ctrl_init(InitRequest)          returns(InitResponse);
