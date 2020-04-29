@@ -28,12 +28,24 @@ public class EyeApp {
 
 		final String host = args[0];
 		final int port = Integer.parseInt(args[1]);
-		final String path = args[2];
-		final String cameraName = args[3];
-		final float latitude = Float.parseFloat(args[4]);
-		final float longitude = Float.parseFloat(args[5]);
+		final String cameraName = args[2];
+		final float latitude = Float.parseFloat(args[3]);
+		final float longitude = Float.parseFloat(args[4]);
 
-		SiloClientFrontend client = new SiloClientFrontend(host, port, path);
+		final int instance;
+
+		if (args.length == 6) {
+			System.out.println("Estou aqui%n");
+			instance = Integer.parseInt(args[5]);
+			if (instance < 1 || instance > 9) {
+				System.out.println("Instance must be between 1 and 9");
+				return;
+			}
+		}
+		else
+			instance = -1;
+
+		SiloClientFrontend client = new SiloClientFrontend(host, port, instance);
 
 		try {
 			client.camJoin(
