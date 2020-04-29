@@ -107,7 +107,9 @@ message QueryRequest {
     oneof Operation {
         TrackRequest trackRequest = 2;
         TrackMatchRequest trackMatchRequest = 3;
-        PingRequest pingRequest = 4;
+        TraceRequest traceRequest = 4;
+        PingRequest pingRequest = 5;
+        CamInfoRequest camInfoRequest = 6;
     }
 }
 
@@ -116,7 +118,9 @@ message QueryResponse {
     oneof Response {
         TrackResponse trackResponse = 2;
         TrackMatchResponse trackMatchResponse = 3;
-        PingResponse pingResponse = 4;
+        TraceResponse traceResponse = 4;
+        PingResponse pingResponse = 5;
+        CamInfoResponse camInfoResponse = 6;
     }
 }
 
@@ -127,6 +131,7 @@ message UpdateRequest {
         ClearRequest clearRequest = 3;
         ReportRequest reportRequest = 4;
         InitRequest initRequest = 5;
+        CamJoinRequest camJoinRequest = 6;
     }
 }
 
