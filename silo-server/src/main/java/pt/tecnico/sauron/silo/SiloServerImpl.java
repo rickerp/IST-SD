@@ -29,9 +29,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     private SiloServerBackend serverBackend = new SiloServerBackend();
 
-    private void executeQuery(QueryRequest request, StreamObserver<QueryResponse> responseObserver) {
-    }
-
     @Override
     public void query(QueryRequest request, StreamObserver<QueryResponse> responseObserver) {
         TimestampVector prev = new TimestampVector(request.getTimestampList());
