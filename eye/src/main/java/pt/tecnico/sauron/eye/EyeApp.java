@@ -28,11 +28,12 @@ public class EyeApp {
 
 		final String host = args[0];
 		final int port = Integer.parseInt(args[1]);
-		final String cameraName = args[2];
-		final float latitude = Float.parseFloat(args[3]);
-		final float longitude = Float.parseFloat(args[4]);
+		final String path = args[2];
+		final String cameraName = args[3];
+		final float latitude = Float.parseFloat(args[4]);
+		final float longitude = Float.parseFloat(args[5]);
 
-		SiloClientFrontend client = new SiloClientFrontend(host, port);
+		SiloClientFrontend client = new SiloClientFrontend(host, port, path);
 
 		try {
 			client.camJoin(

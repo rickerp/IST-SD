@@ -1,11 +1,13 @@
 package pt.tecnico.sauron.silo.client;
 
 
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
+
 import java.util.Scanner;
 
 public class SiloClientApp {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ZKNamingException {
 		System.out.println(SiloClientApp.class.getSimpleName());
 		
 		// receive and print arguments
@@ -23,8 +25,9 @@ public class SiloClientApp {
 
 		final String host = args[0];
 		final int port = Integer.parseInt(args[1]);
+		final String path = "123"; /* implement this */
 
-		SiloClientFrontend client = new SiloClientFrontend(host, port);
+		SiloClientFrontend client = new SiloClientFrontend(host, port, path);
 		client.ping();
 		System.out.println("Received ping");
 	}

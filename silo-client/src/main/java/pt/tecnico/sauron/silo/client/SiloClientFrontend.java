@@ -3,16 +3,25 @@ package pt.tecnico.sauron.silo.client;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.sauron.silo.grpc.*;
+import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
+import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
 public class SiloClientFrontend {
 
     SiloGrpc.SiloBlockingStub stub;
     ManagedChannel channel;
 
-    public SiloClientFrontend(String host, int port) {
-        final String target = host + ":" + port;
-        channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
-        stub = SiloGrpc.newBlockingStub(channel);
+    public SiloClientFrontend(String host, int port, String path) {
+        try {
+            ZKNaming zkNaming = new ZKNaming(host, Integer.toString(port));
+            ZKRecord record = zkNaming.lookup(path);
+            final String target = record.getURI();
+            channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+            stub = SiloGrpc.newBlockingStub(channel);
+        } catch (Exception e) {
+            throw new RuntimeException("failed");
+        }
     }
 
     public InitResponse init() {

@@ -35,8 +35,9 @@ public class SpotterApp {
 
 		final String host = args[0];
 		final int port = Integer.parseInt(args[1]);
+		final String path = args[2];
 
-		SiloClientFrontend client = new SiloClientFrontend(host, port);
+		SiloClientFrontend client = new SiloClientFrontend(host, port, path);
 
 		Scanner scanner = new Scanner(System.in);
 

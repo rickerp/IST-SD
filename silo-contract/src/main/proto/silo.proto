@@ -31,9 +31,12 @@ message PingResponse {}
 //#endregion
 
 //#region clear
-message ClearRequest {}
+message ClearRequest {
+    repeated uint32 timestamp = 1;
+    string id = 4;
+}
 message ClearResponse {}
-//#endregion
+
 
 //#region report
 message ReportRequest {
@@ -98,6 +101,52 @@ message TraceResponse {
 }
 //#endregion
 
+//#region Gossip modifications
+message QueryRequest {
+    repeated uint32 timestamp = 1;
+    oneof Operation {
+        TrackRequest trackRequest = 2;
+        TrackMatchRequest trackMatchRequest = 3;
+    }
+}
+
+message QueryResponse {
+    repeated uint32 timestamp = 1;
+    oneof Response {
+        TrackResponse trackResponse = 2;
+        TrackMatchResponse trackMatchResponse = 3;
+    }
+}
+
+message UpdateRequest {
+    repeated uint32 timestamp = 1;
+    string id = 2;
+    oneof Operation {
+        ClearRequest clearRequest = 3;
+        ReportRequest reportRequest = 4;
+    }
+}
+
+message LogRecord {
+    uint32 replica = 1;
+    repeated uint32 timestamp = 2;
+    UpdateRequest updateRequest = 3;
+}
+
+message UpdateResponse {
+   repeated uint32 timestamp = 1;
+}
+
+message GossipRequest {
+    uint32 timestamp = 1;
+    repeated LogRecord log = 2;
+}
+
+message GossipResponse {
+
+}
+//#endregion
+
 service Silo {
     rpc ctrl_init(InitRequest)          returns(InitResponse);
     rpc cam_info(CamInfoRequest)        returns(CamInfoResponse);
@@ -108,4 +157,8 @@ service Silo {
     rpc track(TrackRequest)             returns(TrackResponse);
     rpc trackMatch(TrackMatchRequest)   returns(TrackMatchResponse);
     rpc trace(TraceRequest)             returns(TraceResponse);
+    rpc update(UpdateRequest)           returns(UpdateResponse);
+
+    rpc query(QueryRequest)             returns(QueryResponse);
+    rpc gossip(GossipRequest)           returns(GossipResponse);
 }
