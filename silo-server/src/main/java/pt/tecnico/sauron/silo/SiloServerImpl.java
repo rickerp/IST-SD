@@ -10,14 +10,123 @@ import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.exception.*;
 import pt.tecnico.sauron.silo.grpc.*;
 
+import javax.management.Query;
 import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.List;
+import java.util.stream.Stream;
 
 public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
+    private TimestampVector replicaTS = new TimestampVector(10);
+    private TimestampVector valueTS = new TimestampVector(10);
+
+    private List<LogRecord> pendingLog = new ArrayList<LogRecord>();
+    private List<LogRecord> executedLog = new ArrayList<LogRecord>();
+
+    private Set<String> executed = new HashSet<String>();
+    private Set<String> pending = new HashSet<String>();
+
     private SiloServerBackend serverBackend = new SiloServerBackend();
+
+    @Override
+    public void query(QueryRequest request, StreamObserver<QueryResponse> responseObserver) {
+        TimestampVector prev = new TimestampVector(request.getTimestampList());
+        // TODO: Wait till query can be executed? Or cache?
+        try {
+            QueryResponse.Builder response = QueryResponse
+                    .newBuilder()
+                    .addAllTimestamp(valueTS.getValues());
+
+            if (request.hasPingRequest()) {
+                response.setPingResponse(
+                        ctrlPing(request.getPingRequest())
+                );
+            }
+
+            responseObserver.onNext(response.build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(getGRPCException(e));
+        }
+    }
+
+    public void ctrlClear(ClearRequest request) {
+        serverBackend.clear();
+    }
+
+    public PingResponse ctrlPing(PingRequest request) {
+        return PingResponse.getDefaultInstance();
+    }
+
+    /**
+     * Returns whether it successfully executed an update request (now or in the past).
+     */
+    private boolean executeUpdate(UpdateRequest request) {
+        if (executed.contains(request.getId()))
+            return true;
+
+        final TimestampVector updateTimestamp = new TimestampVector(request.getTimestampList());
+        if (updateTimestamp.compareTo(valueTS) > 0)
+            return false;
+
+        if (request.hasClearRequest())  {
+            ctrlClear(request.getClearRequest());
+        }
+
+        valueTS.merge(updateTimestamp);
+
+        executed.add(request.getId());
+        pending.remove(request.getId());
+
+        return true;
+    }
+
+    private void runLog() {
+        ListIterator<LogRecord> it = pendingLog.listIterator();
+        while (it.hasNext()) {
+            LogRecord record = it.next();
+            if (executeUpdate(record.getUpdateRequest())) {
+                executedLog.add(record);
+                it.remove();
+            }
+        }
+    }
+
+    @Override
+    public void update(UpdateRequest request, StreamObserver<UpdateResponse> responseObserver) {
+
+        // Already either in log or executed
+        if (executed.contains(request.getId()) || pending.contains(request.getId()))
+            return;
+
+        final int replica = 0;// TODO: Replica number
+
+        replicaTS.set(replica, replicaTS.get(replica) + 1);
+
+        LogRecord.Builder logRecord = LogRecord.newBuilder();
+        logRecord.setReplica(replica);
+        logRecord.setUpdateRequest(request);
+
+        List<Integer> timestampValues = request.getTimestampList();
+        timestampValues.set(0, replicaTS.get(0));
+
+        logRecord.addAllTimestamp(timestampValues);
+
+        if (!executeUpdate(request)) {
+            pending.add(request.getId());
+            pendingLog.add(logRecord.build());
+        } else {
+            executedLog.add(logRecord.build());
+        }
+
+        UpdateResponse response = UpdateResponse.newBuilder()
+                .addAllTimestamp(timestampValues)
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 
     private io.grpc.StatusRuntimeException getGRPCException(Exception exception) {
         Status status = Status.INTERNAL.withDescription("An unknown error occurred.");
@@ -121,7 +230,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         } catch (Exception exception) {
             responseObserver.onError(getGRPCException(exception));
         }
-}
+    }
 
     @Override
     public void ctrlClear(ClearRequest request, StreamObserver<ClearResponse> responseObserver) {
