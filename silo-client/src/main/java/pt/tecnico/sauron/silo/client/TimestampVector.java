@@ -3,8 +3,9 @@ package pt.tecnico.sauron.silo.client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.stream.Collectors;
 
-public class TimestampVector implements Comparable<TimestampVector>{
+public class TimestampVector implements Comparable<TimestampVector> {
 
     private List<Integer> values;
 
@@ -15,19 +16,19 @@ public class TimestampVector implements Comparable<TimestampVector>{
     }
 
     public TimestampVector(List<Integer> values) {
-        this.values = List.copyOf(values);
+       this.values = new ArrayList<>(values);
     }
 
     public List<Integer> getValues() {
         return values;
     }
 
-    public Integer get(Integer index) {
-        return values.get(index);
+    public Integer get(Integer position) {
+        return values.get(position - 1);
     }
 
-    public void set(Integer index, Integer value) {
-        this.values.set(index, value);
+    public void set(Integer position, Integer value) {
+        this.values.set(position - 1, value);
     }
 
     @Override
@@ -39,8 +40,8 @@ public class TimestampVector implements Comparable<TimestampVector>{
             Integer n1 = it1.next();
             Integer n2 = it2.next();
             if (n1 > n2)  {
-                if (result == -1) return 0;
-                else result = 1;
+               if (result == -1) return 0;
+               else result = 1;
             } else if (n1 < n2) {
                 if (result == 1) return 0;
                 else result = -1;
@@ -55,6 +56,11 @@ public class TimestampVector implements Comparable<TimestampVector>{
         while (it1.hasNext() && it2.hasNext()) {
             it1.set(Integer.max(it1.next(), it2.next()));
         }
+    }
+
+    @Override
+    public String toString() {
+        return values.stream().map(String::valueOf).collect(Collectors.joining(", "));
     }
 
 }
