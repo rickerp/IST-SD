@@ -29,9 +29,14 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     private SiloServerBackend serverBackend = new SiloServerBackend();
 
+    final int replica = 1; // TODO: Replica number
+
     @Override
     public void query(QueryRequest request, StreamObserver<QueryResponse> responseObserver) {
         TimestampVector prev = new TimestampVector(request.getTimestampList());
+
+        log(String.format("Received query with ts: %s", prev));
+
         // TODO: Wait till query can be executed? Or cache?
         try {
             QueryResponse.Builder response = QueryResponse
@@ -49,6 +54,10 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         } catch (Exception e) {
             responseObserver.onError(getGRPCException(e));
         }
+    }
+
+    public void log(String message) {
+        System.out.println("Replica " + replica + ": " + message);
     }
 
     public void ctrlClear(ClearRequest request) {
@@ -70,11 +79,13 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         if (updateTimestamp.compareTo(valueTS) > 0)
             return false;
 
+        log(String.format("Update {%s} now executing", request.getId()));
         if (request.hasClearRequest())  {
             ctrlClear(request.getClearRequest());
         }
 
         valueTS.merge(updateTimestamp);
+        log(String.format("VectorTS updated, now: %s", valueTS));
 
         executed.add(request.getId());
         pending.remove(request.getId());
@@ -96,33 +107,41 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
     @Override
     public void update(UpdateRequest request, StreamObserver<UpdateResponse> responseObserver) {
 
+        log(String.format("Received update {%s} ", request.getId()));
+
+        UpdateResponse response;
+
         // Already either in log or executed
-        if (executed.contains(request.getId()) || pending.contains(request.getId()))
-            return;
+        if (!executed.contains(request.getId()) && !pending.contains(request.getId())) {
 
-        final int replica = 0;// TODO: Replica number
+            replicaTS.set(replica, replicaTS.get(replica) + 1);
+            log(String.format("Incrementing timestamp, now: %s", replicaTS));
 
-        replicaTS.set(replica, replicaTS.get(replica) + 1);
+            LogRecord.Builder logRecord = LogRecord.newBuilder();
+            logRecord.setReplica(replica);
+            logRecord.setUpdateRequest(request);
 
-        LogRecord.Builder logRecord = LogRecord.newBuilder();
-        logRecord.setReplica(replica);
-        logRecord.setUpdateRequest(request);
+            List<Integer> timestampValues = new ArrayList<>(request.getTimestampList());
+            timestampValues.set(replica, replicaTS.get(replica));
 
-        List<Integer> timestampValues = request.getTimestampList();
-        timestampValues.set(0, replicaTS.get(0));
+            logRecord.addAllTimestamp(timestampValues);
 
-        logRecord.addAllTimestamp(timestampValues);
-
-        if (!executeUpdate(request)) {
-            pending.add(request.getId());
-            pendingLog.add(logRecord.build());
+            if (!executeUpdate(request)) {
+                log(String.format("Adding update {%s} to the pending log.", request.getId()));
+                pending.add(request.getId());
+                pendingLog.add(logRecord.build());
+            } else {
+                executedLog.add(logRecord.build());
+            }
+            response = UpdateResponse.newBuilder()
+                    .addAllTimestamp(timestampValues)
+                    .build();
         } else {
-            executedLog.add(logRecord.build());
+            log(String.format("Update with id {%s} was already received", request.getId()));
+            response = UpdateResponse.newBuilder()
+                    .addAllTimestamp(replicaTS.getValues())
+                    .build();
         }
-
-        UpdateResponse response = UpdateResponse.newBuilder()
-                .addAllTimestamp(timestampValues)
-                .build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
