@@ -35,9 +35,19 @@ public class SpotterApp {
 
 		final String host = args[0];
 		final int port = Integer.parseInt(args[1]);
-		final String path = args[2];
+		final int instance;
 
-		SiloClientFrontend client = new SiloClientFrontend(host, port, path);
+		if (args.length == 3) {
+			instance = Integer.parseInt(args[2]);
+			if (instance < 1 || instance > 9) {
+				System.out.println("Instance must be between 1 and 9");
+				return;
+			}
+		}
+		else
+			instance = -1;
+
+		SiloClientFrontend client = new SiloClientFrontend(host, port, instance);
 
 		Scanner scanner = new Scanner(System.in);
 
