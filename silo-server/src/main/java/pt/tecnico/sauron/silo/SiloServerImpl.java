@@ -75,7 +75,9 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         }
 
         valueTS.merge(updateTimestamp);
+
         executed.add(request.getId());
+        pending.remove(request.getId());
 
         return true;
     }
