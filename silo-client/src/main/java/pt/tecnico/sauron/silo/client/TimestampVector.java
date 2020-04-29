@@ -1,8 +1,10 @@
-package pt.tecnico.sauron.silo;
+package pt.tecnico.sauron.silo.client;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
-public class TimestampVector implements Comparable<TimestampVector> {
+public class TimestampVector implements Comparable<TimestampVector>{
 
     private List<Integer> values;
 
@@ -13,7 +15,7 @@ public class TimestampVector implements Comparable<TimestampVector> {
     }
 
     public TimestampVector(List<Integer> values) {
-       this.values = List.copyOf(values);
+        this.values = List.copyOf(values);
     }
 
     public List<Integer> getValues() {
@@ -37,8 +39,8 @@ public class TimestampVector implements Comparable<TimestampVector> {
             Integer n1 = it1.next();
             Integer n2 = it2.next();
             if (n1 > n2)  {
-               if (result == -1) return 0;
-               else result = 1;
+                if (result == -1) return 0;
+                else result = 1;
             } else if (n1 < n2) {
                 if (result == 1) return 0;
                 else result = -1;

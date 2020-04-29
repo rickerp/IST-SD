@@ -3,17 +3,17 @@ package pt.tecnico.sauron.silo.client;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.sauron.silo.grpc.*;
-import java.util.ArrayList;
 import java.util.Random;
+import java.util.ArrayList;
 
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
-import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
 public class SiloClientFrontend {
 
     SiloGrpc.SiloBlockingStub stub;
     ManagedChannel channel;
+    TimestampVector timestamp = new TimestampVector(10);
 
     public SiloClientFrontend(String host, int port, int instance) {
         try {
@@ -44,11 +44,25 @@ public class SiloClientFrontend {
     }
 
     public PingResponse ping() {
-        return stub.ctrlPing(PingRequest.getDefaultInstance());
+        QueryRequest queryRequest = QueryRequest.newBuilder()
+                .setPingRequest(PingRequest.getDefaultInstance())
+                .addAllTimestamp(timestamp.getValues())
+                .build();
+
+        return stub.query(queryRequest).getPingResponse();
     }
 
     public ClearResponse clear() {
-        return stub.ctrlClear(ClearRequest.getDefaultInstance());
+        UpdateRequest updateRequest = UpdateRequest.newBuilder()
+                .setClearRequest(ClearRequest.getDefaultInstance())
+                .addAllTimestamp(timestamp.getValues())
+                .build();
+
+        UpdateResponse updateResponse = stub.update(updateRequest);
+
+        timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
+
+        return ClearResponse.getDefaultInstance();
     }
 
     public ReportResponse report(ReportRequest reportRequest) {

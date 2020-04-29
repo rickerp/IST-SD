@@ -9,8 +9,6 @@ import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import java.io.IOException;
 import java.util.Scanner;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 public class SiloServerApp {
 	
 	public static void main(String[] args) throws IOException, InterruptedException, ZKNamingException {
