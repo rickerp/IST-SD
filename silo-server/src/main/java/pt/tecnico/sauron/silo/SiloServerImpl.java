@@ -14,16 +14,108 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
+import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
+
 public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     private TimestampVector valueTS = new TimestampVector(10);
 
+    private List<TimestampVector> table = new ArrayList<>();
     private List<LogRecord> executedLog = new ArrayList<LogRecord>();
     private Set<String> executed = new HashSet<String>();
 
     private SiloServerBackend serverBackend = new SiloServerBackend();
 
-    final int replica = 1; // TODO: Replica number
+    final int replica;
+
+    public SiloServerImpl(String zHost, String zPort, Integer instance) {
+        super();
+
+        for (int i = 0; i < 10; ++i)
+            table.add(new TimestampVector(10));
+
+        replica = instance; 
+        final int gossipInterval = 5; // seconds
+
+        Timer t = new Timer();
+        t.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    ZKNaming zkNaming = new ZKNaming(zHost, zPort);
+
+                    final String prefix = "/grpc/sauron/silo";
+                    ArrayList<ZKRecord> servers = new ArrayList<ZKRecord>(zkNaming.listRecords(prefix));
+
+                    for (ZKRecord record : servers) {
+                        String[] aux = record.getPath().split("/");
+
+                        final int sv = Integer.parseInt(aux[aux.length - 1]);
+                        if (sv == replica) continue;
+
+                        final String target = record.getURI();
+
+                        ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+                        SiloGrpc.SiloBlockingStub stub = SiloGrpc.newBlockingStub(channel);
+                        stub.gossip(GossipRequest.newBuilder()
+                                                    .addAllTimestamp(valueTS.getValues())
+                                                    .addAllLog(executedLog.stream()
+                                                    .filter(e -> {
+                                                        var ts = new TimestampVector(e.getTimestampList());
+                                                        return ts.compareTo(table.get(sv)) > 0;
+                                                    }).collect(Collectors.toList()))
+                                                    .setReplica(replica)
+                                                    .build());
+                        channel.shutdownNow();
+                    }
+                } catch (Exception e) {
+                    //throw new RuntimeException("failed");
+                }
+            }
+        }, 0, gossipInterval * 1000);
+    }
+
+    @Override
+    public void gossip(GossipRequest request, StreamObserver<GossipResponse> responseObserver) {
+        try {
+            List<LogRecord> gossipLog = request.getLogList();
+            TimestampVector gossipTS = new TimestampVector(request.getTimestampList());
+
+            table.set(request.getReplica(), gossipTS);
+
+            for (LogRecord l : gossipLog) {
+                var updateRequest = l.getUpdateRequest();
+                log(String.format("Received update {%s} from gossip.", updateRequest.getId()));
+                if (!executed.contains(updateRequest.getId())) {
+                    try {
+                        if (updateRequest.hasCamJoinRequest()) {
+                            camJoin(updateRequest.getCamJoinRequest());
+                        } else if (updateRequest.hasReportRequest()) {
+                            report(updateRequest.getReportRequest());
+                        }
+                        executedLog.add(l);
+                        executed.add(updateRequest.getId());
+                        valueTS.merge(gossipTS);
+                    } catch (Exception e) {
+                        log(String.format("Update {%s} failed", updateRequest.getId()));
+                        responseObserver.onError(getGRPCException(e));
+                    }
+                }
+            }
+            log(String.format("VectorTS after gossip: %s", valueTS));
+
+            GossipResponse response = GossipResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception exception) {
+            responseObserver.onError(getGRPCException(exception));
+        }
+        
+    }
 
     @Override
     public void query(QueryRequest request, StreamObserver<QueryResponse> responseObserver) {
@@ -284,6 +376,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 list.add(observationDomain);
             }
             serverBackend.report(list);
+
             ReportResponse response = ReportResponse.getDefaultInstance();
             responseObserver.onNext(response);
             responseObserver.onCompleted();

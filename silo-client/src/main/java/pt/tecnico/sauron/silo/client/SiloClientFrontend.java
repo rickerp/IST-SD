@@ -16,9 +16,9 @@ public class SiloClientFrontend {
     ManagedChannel channel;
     TimestampVector timestamp = new TimestampVector(10);
 
-    public SiloClientFrontend(String host, int port, int instance) {
+    public SiloClientFrontend(String zHost, int zPort, int instance) {
         try {
-            ZKNaming zkNaming = new ZKNaming(host, Integer.toString(port));
+            ZKNaming zkNaming = new ZKNaming(zHost, Integer.toString(zPort));
             String path = "/grpc/sauron/silo";
             Random random = new Random();
 
