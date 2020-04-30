@@ -108,8 +108,7 @@ message QueryRequest {
         TrackRequest trackRequest = 2;
         TrackMatchRequest trackMatchRequest = 3;
         TraceRequest traceRequest = 4;
-        PingRequest pingRequest = 5;
-        CamInfoRequest camInfoRequest = 6;
+        CamInfoRequest camInfoRequest = 5;
     }
 }
 
@@ -119,8 +118,7 @@ message QueryResponse {
         TrackResponse trackResponse = 2;
         TrackMatchResponse trackMatchResponse = 3;
         TraceResponse traceResponse = 4;
-        PingResponse pingResponse = 5;
-        CamInfoResponse camInfoResponse = 6;
+        CamInfoResponse camInfoResponse = 5;
     }
 }
 
@@ -128,10 +126,8 @@ message UpdateRequest {
     repeated uint32 timestamp = 1;
     string id = 2;
     oneof Operation {
-        ClearRequest clearRequest = 3;
-        ReportRequest reportRequest = 4;
-        InitRequest initRequest = 5;
-        CamJoinRequest camJoinRequest = 6;
+        ReportRequest reportRequest = 3;
+        CamJoinRequest camJoinRequest = 4;
     }
 }
 

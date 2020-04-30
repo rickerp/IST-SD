@@ -41,35 +41,15 @@ public class SiloClientFrontend {
     }
 
     public InitResponse init() {
-        UUID uuid = UUID.randomUUID();
-
-        UpdateRequest updateRequest = UpdateRequest.newBuilder()
-                .setInitRequest(InitRequest.getDefaultInstance())
-                .addAllTimestamp(timestamp.getValues())
-                .setId(uuid.toString())
-                .build();
-
-        UpdateResponse updateResponse = stub.update(updateRequest);
-
-        timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
-
-        return InitResponse.getDefaultInstance();
+        return stub.ctrlInit(InitRequest.getDefaultInstance());
     }
 
     public ClearResponse clear() {
-        UUID uuid = UUID.randomUUID();
+        return stub.ctrlClear(ClearRequest.getDefaultInstance());
+    }
 
-        UpdateRequest updateRequest = UpdateRequest.newBuilder()
-                .setClearRequest(ClearRequest.getDefaultInstance())
-                .addAllTimestamp(timestamp.getValues())
-                .setId(uuid.toString())
-                .build();
-
-        UpdateResponse updateResponse = stub.update(updateRequest);
-
-        timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
-
-        return ClearResponse.getDefaultInstance();
+    public PingResponse ping() {
+        return stub.ctrlPing(PingRequest.getDefaultInstance());
     }
 
     public ReportResponse report(ReportRequest reportRequest) {
@@ -104,19 +84,6 @@ public class SiloClientFrontend {
         timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
 
         return CamJoinResponse.getDefaultInstance();
-    }
-
-    public PingResponse ping() {
-        QueryRequest queryRequest = QueryRequest.newBuilder()
-                .setPingRequest(PingRequest.getDefaultInstance())
-                .addAllTimestamp(timestamp.getValues())
-                .build();
-
-        QueryResponse queryResponse = stub.query(queryRequest);
-
-        timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
-
-        return queryResponse.getPingResponse();
     }
 
     public CamInfoResponse camInfo(CamInfoRequest camInfoRequest) {
