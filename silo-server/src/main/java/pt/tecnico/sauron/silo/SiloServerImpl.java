@@ -10,40 +10,45 @@ import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.exception.*;
 import pt.tecnico.sauron.silo.grpc.*;
 
-import javax.management.Query;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
-    private TimestampVector replicaTS = new TimestampVector(10);
     private TimestampVector valueTS = new TimestampVector(10);
 
-    private List<LogRecord> pendingLog = new ArrayList<LogRecord>();
     private List<LogRecord> executedLog = new ArrayList<LogRecord>();
-
     private Set<String> executed = new HashSet<String>();
-    private Set<String> pending = new HashSet<String>();
 
     private SiloServerBackend serverBackend = new SiloServerBackend();
+
+    final int replica = 1; // TODO: Replica number
 
     @Override
     public void query(QueryRequest request, StreamObserver<QueryResponse> responseObserver) {
         TimestampVector prev = new TimestampVector(request.getTimestampList());
-        // TODO: Wait till query can be executed? Or cache?
+
+        log(String.format("Received query with ts: %s", prev));
+
         try {
             QueryResponse.Builder response = QueryResponse
                     .newBuilder()
                     .addAllTimestamp(valueTS.getValues());
 
-            if (request.hasPingRequest()) {
-                response.setPingResponse(
-                        ctrlPing(request.getPingRequest())
+            if (request.hasCamInfoRequest()) {
+                response.setCamInfoResponse(
+                        camInfo(request.getCamInfoRequest())
                 );
+            } else if (request.hasTrackMatchRequest()) {
+                response.setTrackMatchResponse(
+                        trackMatch(request.getTrackMatchRequest())
+                );
+            } else if (request.hasTrackRequest()) {
+                response.setTrackResponse(track(request.getTrackRequest()));
+            } else if (request.hasTraceRequest()) {
+                response.setTraceResponse(trace(request.getTraceRequest()));
             }
-
             responseObserver.onNext(response.build());
             responseObserver.onCompleted();
         } catch (Exception e) {
@@ -51,77 +56,51 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         }
     }
 
-    public void ctrlClear(ClearRequest request) {
-        serverBackend.clear();
-    }
-
-    public PingResponse ctrlPing(PingRequest request) {
-        return PingResponse.getDefaultInstance();
-    }
-
-    /**
-     * Returns whether it successfully executed an update request (now or in the past).
-     */
-    private boolean executeUpdate(UpdateRequest request) {
-        if (executed.contains(request.getId()))
-            return true;
-
-        final TimestampVector updateTimestamp = new TimestampVector(request.getTimestampList());
-        if (updateTimestamp.compareTo(valueTS) > 0)
-            return false;
-
-        if (request.hasClearRequest())  {
-            ctrlClear(request.getClearRequest());
-        }
-
-        valueTS.merge(updateTimestamp);
-
-        executed.add(request.getId());
-        pending.remove(request.getId());
-
-        return true;
-    }
-
-    private void runLog() {
-        ListIterator<LogRecord> it = pendingLog.listIterator();
-        while (it.hasNext()) {
-            LogRecord record = it.next();
-            if (executeUpdate(record.getUpdateRequest())) {
-                executedLog.add(record);
-                it.remove();
-            }
-        }
+    public void log(String message) {
+        System.out.println("Replica " + replica + ": " + message);
     }
 
     @Override
     public void update(UpdateRequest request, StreamObserver<UpdateResponse> responseObserver) {
 
-        // Already either in log or executed
-        if (executed.contains(request.getId()) || pending.contains(request.getId()))
-            return;
+        log(String.format("Received update {%s} ", request.getId()));
 
-        final int replica = 0;// TODO: Replica number
+        UpdateResponse response;
 
-        replicaTS.set(replica, replicaTS.get(replica) + 1);
+        if (!executed.contains(request.getId())) {
 
-        LogRecord.Builder logRecord = LogRecord.newBuilder();
-        logRecord.setReplica(replica);
-        logRecord.setUpdateRequest(request);
+            log(String.format("Update {%s} now executing", request.getId()));
 
-        List<Integer> timestampValues = request.getTimestampList();
-        timestampValues.set(0, replicaTS.get(0));
+            try {
+                if (request.hasCamJoinRequest()) {
+                    camJoin(request.getCamJoinRequest());
+                } else if (request.hasReportRequest()) {
+                    report(request.getReportRequest());
+                }
+            } catch (Exception e) {
+                log(String.format("Update {%s} failed", request.getId()));
+                responseObserver.onError(getGRPCException(e));
+                return;
+            }
 
-        logRecord.addAllTimestamp(timestampValues);
+            valueTS.set(replica, valueTS.get(replica) + 1);
+            log(String.format("VectorTS updated, now: %s", valueTS));
 
-        if (!executeUpdate(request)) {
-            pending.add(request.getId());
-            pendingLog.add(logRecord.build());
+            LogRecord logRecord = LogRecord.newBuilder()
+                        .setReplica(replica)
+                        .setUpdateRequest(request)
+                        .addAllTimestamp(valueTS.getValues())
+                        .build();
+
+            executedLog.add(logRecord);
+            executed.add(request.getId());
+
         } else {
-            executedLog.add(logRecord.build());
+            log(String.format("Update with id {%s} was already received", request.getId()));
         }
 
-        UpdateResponse response = UpdateResponse.newBuilder()
-                .addAllTimestamp(timestampValues)
+        response = UpdateResponse.newBuilder()
+                .addAllTimestamp(valueTS.getValues())
                 .build();
 
         responseObserver.onNext(response);
@@ -244,6 +223,10 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         }
     }
 
+    public void camJoin(CamJoinRequest request) throws CoordinateException, SiloArgumentException, CamAlreadyExistsException {
+        serverBackend.camJoin(request.getCameraName(), request.getLatitude(), request.getLongitude());
+    }
+
     @Override
     public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
         try {
@@ -254,6 +237,15 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         } catch (Exception exception) {
             responseObserver.onError(getGRPCException(exception));
         }
+    }
+
+    public CamInfoResponse camInfo(CamInfoRequest request) throws CamNotFoundException {
+        String cameraName = request.getCameraName();
+        Camera camera = serverBackend.getCamera(cameraName);
+        return CamInfoResponse.newBuilder()
+                .setLatitude(camera.getLatitude())
+                .setLongitude(camera.getLongitude())
+                .build();
     }
 
     @Override
@@ -270,6 +262,16 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         } catch (Exception exception) {
             responseObserver.onError(getGRPCException(exception));
         }
+    }
+
+    public void report(ReportRequest request) throws CamNotFoundException, SiloArgumentException {
+        List<ObservationDomain> list = new ArrayList<>();
+        for (Observation o : request.getObservationsList()) {
+            Observation build = o.toBuilder().setCameraName(request.getCameraName()).build();
+            ObservationDomain observationDomain = toObservationDomain(build);
+            list.add(observationDomain);
+        }
+        serverBackend.report(list);
     }
 
     @Override
@@ -290,6 +292,15 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         }
     }
 
+    public TraceResponse trace(TraceRequest request) throws SiloArgumentException {
+        List<Observation> observations = serverBackend
+                .trace(parseObject(request.getTarget(), request.getId()))
+                .stream()
+                .map(this::toObservation)
+                .collect(Collectors.toList());
+        return TraceResponse.newBuilder().addAllObservations(observations).build();
+    }
+
     @Override
     public void trace(TraceRequest request, StreamObserver<TraceResponse> responseObserver) {
         try {
@@ -306,6 +317,14 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         }
     }
 
+    public TrackResponse track(TrackRequest request) throws SiloArgumentException {
+        Observation observation = serverBackend
+                .track(parseObject(request.getTarget(), request.getId()))
+                .map(this::toObservation)
+                .orElse(Observation.getDefaultInstance());
+        return TrackResponse.newBuilder().setObservation(observation).build();
+    }
+
     @Override
     public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
         try {
@@ -319,6 +338,15 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         } catch (Exception exception) {
             responseObserver.onError(getGRPCException(exception));
         }
+    }
+
+    public TrackMatchResponse trackMatch(TrackMatchRequest request) {
+        List<Observation> observations = serverBackend
+                .trackMatch(toDomainType(request.getTarget()), request.getId())
+                .stream()
+                .map(this::toObservation)
+                .collect(Collectors.toList());
+        return TrackMatchResponse.newBuilder().addAllObservations(observations).build();
     }
 
     @Override

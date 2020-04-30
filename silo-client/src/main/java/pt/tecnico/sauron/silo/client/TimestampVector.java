@@ -1,6 +1,8 @@
-package pt.tecnico.sauron.silo;
+package pt.tecnico.sauron.silo.client;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.stream.Collectors;
 
 public class TimestampVector implements Comparable<TimestampVector> {
