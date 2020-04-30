@@ -15,6 +15,7 @@ public class SiloClientFrontend {
     SiloGrpc.SiloBlockingStub stub;
     ManagedChannel channel;
     TimestampVector timestamp = new TimestampVector(10);
+    UpdateRequest eyeInfo;
 
     public SiloClientFrontend(String zHost, int zPort, int instance) {
         try {
@@ -27,8 +28,7 @@ public class SiloClientFrontend {
             else {
                 ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(path));
                 int r = random.nextInt(servers.size());
-                String[] aux = servers.get(r).getPath().split("/");
-                path += "/" + aux[aux.length - 1];
+                path = servers.get(r).getPath();
             }
 
             ZKRecord record = zkNaming.lookup(path);
@@ -41,35 +41,15 @@ public class SiloClientFrontend {
     }
 
     public InitResponse init() {
-        UUID uuid = UUID.randomUUID();
-
-        UpdateRequest updateRequest = UpdateRequest.newBuilder()
-                .setInitRequest(InitRequest.getDefaultInstance())
-                .addAllTimestamp(timestamp.getValues())
-                .setId(uuid.toString())
-                .build();
-
-        UpdateResponse updateResponse = stub.update(updateRequest);
-
-        timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
-
-        return InitResponse.getDefaultInstance();
+        return stub.ctrlInit(InitRequest.getDefaultInstance());
     }
 
     public ClearResponse clear() {
-        UUID uuid = UUID.randomUUID();
+        return stub.ctrlClear(ClearRequest.getDefaultInstance());
+    }
 
-        UpdateRequest updateRequest = UpdateRequest.newBuilder()
-                .setClearRequest(ClearRequest.getDefaultInstance())
-                .addAllTimestamp(timestamp.getValues())
-                .setId(uuid.toString())
-                .build();
-
-        UpdateResponse updateResponse = stub.update(updateRequest);
-
-        timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
-
-        return ClearResponse.getDefaultInstance();
+    public PingResponse ping() {
+        return stub.ctrlPing(PingRequest.getDefaultInstance());
     }
 
     public ReportResponse report(ReportRequest reportRequest) {
@@ -97,20 +77,13 @@ public class SiloClientFrontend {
                 .setId(uuid.toString())
                 .build();
 
+        eyeInfo = updateRequest;
+
         UpdateResponse updateResponse = stub.update(updateRequest);
 
         timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
 
         return CamJoinResponse.getDefaultInstance();
-    }
-
-    public PingResponse ping() {
-        QueryRequest queryRequest = QueryRequest.newBuilder()
-                .setPingRequest(PingRequest.getDefaultInstance())
-                .addAllTimestamp(timestamp.getValues())
-                .build();
-
-        return stub.query(queryRequest).getPingResponse();
     }
 
     public CamInfoResponse camInfo(CamInfoRequest camInfoRequest) {
@@ -119,7 +92,11 @@ public class SiloClientFrontend {
                 .addAllTimestamp(timestamp.getValues())
                 .build();
 
-        return stub.query(queryRequest).getCamInfoResponse();
+        QueryResponse queryResponse = stub.query(queryRequest);
+
+        timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
+
+        return queryResponse.getCamInfoResponse();
     }
 
     public TrackResponse track(TrackRequest trackRequest) {
@@ -128,7 +105,11 @@ public class SiloClientFrontend {
                 .addAllTimestamp(timestamp.getValues())
                 .build();
 
-        return stub.query(queryRequest).getTrackResponse();
+        QueryResponse queryResponse = stub.query(queryRequest);
+
+        timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
+
+        return queryResponse.getTrackResponse();
     }
 
     public TrackMatchResponse trackMatch(TrackMatchRequest trackMatchRequest) {
@@ -137,7 +118,11 @@ public class SiloClientFrontend {
                 .addAllTimestamp(timestamp.getValues())
                 .build();
 
-        return stub.query(queryRequest).getTrackMatchResponse();
+        QueryResponse queryResponse = stub.query(queryRequest);
+
+        timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
+
+        return queryResponse.getTrackMatchResponse();
     }
 
     public TraceResponse trace(TraceRequest traceRequest) {
@@ -146,7 +131,11 @@ public class SiloClientFrontend {
                 .addAllTimestamp(timestamp.getValues())
                 .build();
 
-        return stub.query(queryRequest).getTraceResponse();
+        QueryResponse queryResponse = stub.query(queryRequest);
+
+        timestamp.merge(new TimestampVector(queryRequest.getTimestampList()));
+
+        return queryResponse.getTraceResponse();
     }
 
     public void end() {
