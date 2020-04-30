@@ -2,12 +2,15 @@ package pt.tecnico.sauron.silo.client;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.grpc.*;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.UUID;
 
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
+import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
 import pt.ulisboa.tecnico.sdis.zk.ZKRecord;
 
 public class SiloClientFrontend {
@@ -15,12 +18,15 @@ public class SiloClientFrontend {
     SiloGrpc.SiloBlockingStub stub;
     ManagedChannel channel;
     TimestampVector timestamp = new TimestampVector(10);
-    UpdateRequest eyeInfo;
+    UpdateRequest clientLogin;
+    ZKNaming zkNaming;
+    boolean reconnect = false;
+    final String prefix = "/grpc/sauron/silo";
 
     public SiloClientFrontend(String zHost, int zPort, int instance) {
         try {
-            ZKNaming zkNaming = new ZKNaming(zHost, Integer.toString(zPort));
-            String path = "/grpc/sauron/silo";
+            zkNaming = new ZKNaming(zHost, Integer.toString(zPort));
+            String path = prefix;
             Random random = new Random();
 
             if (instance != -1)
@@ -29,6 +35,7 @@ public class SiloClientFrontend {
                 ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(path));
                 int r = random.nextInt(servers.size());
                 path = servers.get(r).getPath();
+                reconnect = true;
             }
 
             ZKRecord record = zkNaming.lookup(path);
@@ -52,6 +59,71 @@ public class SiloClientFrontend {
         return stub.ctrlPing(PingRequest.getDefaultInstance());
     }
 
+    private UpdateResponse update(UpdateRequest updateRequest) {
+        while (true) {
+            try {
+                UpdateResponse updateResponse = stub.update(updateRequest);
+
+                timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
+
+                return UpdateResponse.getDefaultInstance();
+
+            } catch (StatusRuntimeException e) {
+                if (e.getStatus().getCode() != Status.Code.UNAVAILABLE || !reconnect)
+                    throw e;
+                else {
+                    try {
+                        channel.shutdownNow();
+                        ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(prefix));
+                        int r = new Random().nextInt(servers.size());
+                        String path = servers.get(r).getPath();
+
+                        ZKRecord record = zkNaming.lookup(path);
+                        final String target = record.getURI();
+                        channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+                        stub = SiloGrpc.newBlockingStub(channel);
+
+                        if (!updateRequest.hasCamJoinRequest())
+                            stub.update(clientLogin);
+
+                    } catch (ZKNamingException zke) {
+                        zke.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    private QueryResponse query(QueryRequest queryRequest) {
+        while (true) {
+            try {
+                QueryResponse queryResponse = stub.query(queryRequest);
+
+                timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
+
+                return queryResponse;
+
+            } catch (StatusRuntimeException e) {
+                if (e.getStatus().getCode() != Status.Code.UNAVAILABLE)
+                    throw e;
+                else {
+                    try {
+                        ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(prefix));
+                        int r = new Random().nextInt(servers.size());
+                        String path = servers.get(r).getPath();
+
+                        ZKRecord record = zkNaming.lookup(path);
+                        final String target = record.getURI();
+                        channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+                        stub = SiloGrpc.newBlockingStub(channel);
+                    } catch (ZKNamingException zke) {
+                        zke.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
     public ReportResponse report(ReportRequest reportRequest) {
         UUID uuid = UUID.randomUUID();
 
@@ -61,9 +133,7 @@ public class SiloClientFrontend {
                 .setId(uuid.toString())
                 .build();
 
-        UpdateResponse updateResponse = stub.update(updateRequest);
-
-        timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
+        update(updateRequest);
 
         return ReportResponse.getDefaultInstance();
     }
@@ -77,11 +147,9 @@ public class SiloClientFrontend {
                 .setId(uuid.toString())
                 .build();
 
-        eyeInfo = updateRequest;
+        clientLogin = updateRequest;
 
-        UpdateResponse updateResponse = stub.update(updateRequest);
-
-        timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
+        update(updateRequest);
 
         return CamJoinResponse.getDefaultInstance();
     }
@@ -92,9 +160,7 @@ public class SiloClientFrontend {
                 .addAllTimestamp(timestamp.getValues())
                 .build();
 
-        QueryResponse queryResponse = stub.query(queryRequest);
-
-        timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
+        QueryResponse queryResponse = query(queryRequest);
 
         return queryResponse.getCamInfoResponse();
     }
@@ -105,9 +171,7 @@ public class SiloClientFrontend {
                 .addAllTimestamp(timestamp.getValues())
                 .build();
 
-        QueryResponse queryResponse = stub.query(queryRequest);
-
-        timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
+        QueryResponse queryResponse = query(queryRequest);
 
         return queryResponse.getTrackResponse();
     }
@@ -118,9 +182,7 @@ public class SiloClientFrontend {
                 .addAllTimestamp(timestamp.getValues())
                 .build();
 
-        QueryResponse queryResponse = stub.query(queryRequest);
-
-        timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
+        QueryResponse queryResponse = query(queryRequest);
 
         return queryResponse.getTrackMatchResponse();
     }
@@ -131,9 +193,7 @@ public class SiloClientFrontend {
                 .addAllTimestamp(timestamp.getValues())
                 .build();
 
-        QueryResponse queryResponse = stub.query(queryRequest);
-
-        timestamp.merge(new TimestampVector(queryRequest.getTimestampList()));
+        QueryResponse queryResponse = query(queryRequest);
 
         return queryResponse.getTraceResponse();
     }

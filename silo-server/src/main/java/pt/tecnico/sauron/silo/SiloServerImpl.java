@@ -39,7 +39,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
             table.add(new TimestampVector(10));
 
         replica = instance; 
-        final int gossipInterval = 5; // seconds
+        final int gossipInterval = 30; // seconds
 
         Timer t = new Timer();
         t.schedule(new TimerTask() {
@@ -76,7 +76,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                     //throw new RuntimeException("failed");
                 }
             }
-        }, 0, gossipInterval * 1000);
+        }, gossipInterval * 1000, gossipInterval * 1000);
     }
 
     @Override
@@ -101,8 +101,10 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                         executed.add(updateRequest.getId());
                         valueTS.merge(gossipTS);
                     } catch (Exception e) {
+                        e.printStackTrace();
                         log(String.format("Update {%s} failed", updateRequest.getId()));
                         responseObserver.onError(getGRPCException(e));
+                        return;
                     }
                 }
             }
@@ -319,18 +321,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         serverBackend.camJoin(request.getCameraName(), request.getLatitude(), request.getLongitude());
     }
 
-    @Override
-    public void camJoin(CamJoinRequest request, StreamObserver<CamJoinResponse> responseObserver) {
-        try {
-            serverBackend.camJoin(request.getCameraName(), request.getLatitude(), request.getLongitude());
-            CamJoinResponse response = CamJoinResponse.getDefaultInstance();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception exception) {
-            responseObserver.onError(getGRPCException(exception));
-        }
-    }
-
     public CamInfoResponse camInfo(CamInfoRequest request) throws CamNotFoundException {
         String cameraName = request.getCameraName();
         Camera camera = serverBackend.getCamera(cameraName);
@@ -338,22 +328,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 .setLatitude(camera.getLatitude())
                 .setLongitude(camera.getLongitude())
                 .build();
-    }
-
-    @Override
-    public void camInfo(CamInfoRequest request, StreamObserver<CamInfoResponse> responseObserver) {
-        try {
-            String cameraName = request.getCameraName();
-            Camera camera = serverBackend.getCamera(cameraName);
-            CamInfoResponse response = CamInfoResponse.newBuilder()
-                    .setLatitude(camera.getLatitude())
-                    .setLongitude(camera.getLongitude())
-                    .build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception exception) {
-            responseObserver.onError(getGRPCException(exception));
-        }
     }
 
     public void report(ReportRequest request) throws CamNotFoundException, SiloArgumentException {
@@ -366,25 +340,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         serverBackend.report(list);
     }
 
-    @Override
-    public void report(ReportRequest request, StreamObserver<ReportResponse> responseObserver) {
-        try {
-            List<ObservationDomain> list = new ArrayList<>();
-            for (Observation o : request.getObservationsList()) {
-                Observation build = o.toBuilder().setCameraName(request.getCameraName()).build();
-                ObservationDomain observationDomain = toObservationDomain(build);
-                list.add(observationDomain);
-            }
-            serverBackend.report(list);
-
-            ReportResponse response = ReportResponse.getDefaultInstance();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception exception) {
-            responseObserver.onError(getGRPCException(exception));
-        }
-    }
-
     public TraceResponse trace(TraceRequest request) throws SiloArgumentException {
         List<Observation> observations = serverBackend
                 .trace(parseObject(request.getTarget(), request.getId()))
@@ -392,22 +347,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 .map(this::toObservation)
                 .collect(Collectors.toList());
         return TraceResponse.newBuilder().addAllObservations(observations).build();
-    }
-
-    @Override
-    public void trace(TraceRequest request, StreamObserver<TraceResponse> responseObserver) {
-        try {
-            List<Observation> observations = serverBackend
-                    .trace(parseObject(request.getTarget(), request.getId()))
-                    .stream()
-                    .map(this::toObservation)
-                    .collect(Collectors.toList());
-            TraceResponse response = TraceResponse.newBuilder().addAllObservations(observations).build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception exception) {
-            responseObserver.onError(getGRPCException(exception));
-        }
     }
 
     public TrackResponse track(TrackRequest request) throws SiloArgumentException {
@@ -418,21 +357,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         return TrackResponse.newBuilder().setObservation(observation).build();
     }
 
-    @Override
-    public void track(TrackRequest request, StreamObserver<TrackResponse> responseObserver) {
-        try {
-            Observation observation = serverBackend
-                    .track(parseObject(request.getTarget(), request.getId()))
-                    .map(this::toObservation)
-                    .orElse(Observation.getDefaultInstance());
-            TrackResponse response = TrackResponse.newBuilder().setObservation(observation).build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception exception) {
-            responseObserver.onError(getGRPCException(exception));
-        }
-    }
-
     public TrackMatchResponse trackMatch(TrackMatchRequest request) {
         List<Observation> observations = serverBackend
                 .trackMatch(toDomainType(request.getTarget()), request.getId())
@@ -440,22 +364,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 .map(this::toObservation)
                 .collect(Collectors.toList());
         return TrackMatchResponse.newBuilder().addAllObservations(observations).build();
-    }
-
-    @Override
-    public void trackMatch(TrackMatchRequest request, StreamObserver<TrackMatchResponse> responseObserver) {
-        try {
-            List<Observation> observations = serverBackend
-                    .trackMatch(toDomainType(request.getTarget()), request.getId())
-                    .stream()
-                    .map(this::toObservation)
-                    .collect(Collectors.toList());
-            TrackMatchResponse response = TrackMatchResponse.newBuilder().addAllObservations(observations).build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } catch (Exception exception) {
-            responseObserver.onError(getGRPCException(exception));
-        }
     }
 
 }

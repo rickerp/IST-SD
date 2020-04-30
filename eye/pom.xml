@@ -76,7 +76,6 @@
 					<arguments>
 						<argument>localhost</argument>
 						<argument>2181</argument>
-						<argument>/grpc/sauron/silo/1</argument>
                         <argument>Tagus</argument>
 						<argument>20</argument>
 						<argument>20</argument>
