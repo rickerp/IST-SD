@@ -35,7 +35,6 @@ public class EyeApp {
 		final int instance;
 
 		if (args.length == 6) {
-			System.out.println("Estou aqui%n");
 			instance = Integer.parseInt(args[5]);
 			if (instance < 1 || instance > 9) {
 				System.out.println("Instance must be between 1 and 9");
