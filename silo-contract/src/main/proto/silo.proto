@@ -148,6 +148,7 @@ message UpdateResponse {
 message GossipRequest {
     repeated uint32 timestamp = 1;
     repeated LogRecord log = 2;
+    uint32 replica = 3;
 }
 
 message GossipResponse {
