@@ -81,11 +81,11 @@
 				<configuration>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
-                        <argument>${zoo.host}</argument>
-                        <argument>${zoo.port}</argument>
-                        <argument>${server.host}</argument>
-                        <argument>${server.port}</argument>
-                        <argument>${server.path}</argument>
+						<argument>${zoo.host}</argument>
+						<argument>${zoo.port}</argument>
+						<argument>${server.host}</argument>
+						<argument>${server.port}</argument>
+						<argument>${instance}</argument>
 					</arguments>
 				</configuration>
 			</plugin>
