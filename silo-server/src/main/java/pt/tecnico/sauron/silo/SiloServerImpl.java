@@ -10,22 +10,16 @@ import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.exception.*;
 import pt.tecnico.sauron.silo.grpc.*;
 
-import javax.management.Query;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
-    private TimestampVector replicaTS = new TimestampVector(10);
     private TimestampVector valueTS = new TimestampVector(10);
 
-    private List<LogRecord> pendingLog = new ArrayList<LogRecord>();
     private List<LogRecord> executedLog = new ArrayList<LogRecord>();
-
     private Set<String> executed = new HashSet<String>();
-    private Set<String> pending = new HashSet<String>();
 
     private SiloServerBackend serverBackend = new SiloServerBackend();
 
@@ -37,17 +31,12 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
         log(String.format("Received query with ts: %s", prev));
 
-        // TODO: Wait till query can be executed? Or cache?
         try {
             QueryResponse.Builder response = QueryResponse
                     .newBuilder()
                     .addAllTimestamp(valueTS.getValues());
 
-            if (request.hasPingRequest()) {
-                response.setPingResponse(
-                        ctrlPing(request.getPingRequest())
-                );
-            } else if (request.hasCamInfoRequest()) {
+            if (request.hasCamInfoRequest()) {
                 response.setCamInfoResponse(
                         camInfo(request.getCamInfoRequest())
                 );
@@ -71,60 +60,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
         System.out.println("Replica " + replica + ": " + message);
     }
 
-    public void ctrlClear(ClearRequest request) {
-        serverBackend.clear();
-    }
-
-    public PingResponse ctrlPing(PingRequest request) {
-        return PingResponse.getDefaultInstance();
-    }
-
-    /**
-     * Returns whether it successfully executed an update request (now or in the past).
-     */
-    private boolean executeUpdate(LogRecord logRecord) {
-        var request = logRecord.getUpdateRequest();
-        if (executed.contains(request.getId()))
-            return true;
-
-        final TimestampVector updateTimestamp = new TimestampVector(request.getTimestampList());
-        if (updateTimestamp.compareTo(valueTS) > 0)
-            return false;
-
-        log(String.format("Update {%s} now executing", request.getId()));
-
-        try {
-            if (request.hasClearRequest()) {
-                ctrlClear(request.getClearRequest());
-            } else if (request.hasInitRequest()) {
-                ctrlInit(request.getInitRequest());
-            } else if (request.hasCamJoinRequest()) {
-                camJoin(request.getCamJoinRequest());
-            } else if (request.hasReportRequest()) {
-                report(request.getReportRequest());
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-
-        valueTS.merge(new TimestampVector(logRecord.getTimestampList()));
-        log(String.format("VectorTS updated, now: %s", valueTS));
-
-        executed.add(request.getId());
-        pending.remove(request.getId());
-
-        return true;
-    }
-
-    private void runLog() {
-        ListIterator<LogRecord> it = pendingLog.listIterator();
-        while (it.hasNext()) {
-            LogRecord record = it.next();
-            if (executeUpdate(record)) {
-                executedLog.add(record);
-                it.remove();
-            }
-        }
-    }
-
     @Override
     public void update(UpdateRequest request, StreamObserver<UpdateResponse> responseObserver) {
 
@@ -132,37 +67,41 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
         UpdateResponse response;
 
-        // Already either in log or executed
-        if (!executed.contains(request.getId()) && !pending.contains(request.getId())) {
+        if (!executed.contains(request.getId())) {
 
-            replicaTS.set(replica, replicaTS.get(replica) + 1);
-            log(String.format("Incrementing timestamp, now: %s", replicaTS));
+            log(String.format("Update {%s} now executing", request.getId()));
 
-            LogRecord.Builder logRecord = LogRecord.newBuilder();
-            logRecord.setReplica(replica);
-            logRecord.setUpdateRequest(request);
-
-            List<Integer> timestampValues = new ArrayList<>(request.getTimestampList());
-            timestampValues.set(replica - 1, replicaTS.get(replica));
-
-            logRecord.addAllTimestamp(timestampValues);
-
-            if (!executeUpdate(logRecord.build())) {
-                log(String.format("Adding update {%s} to the pending log.", request.getId()));
-                pending.add(request.getId());
-                pendingLog.add(logRecord.build());
-            } else {
-                executedLog.add(logRecord.build());
+            try {
+                if (request.hasCamJoinRequest()) {
+                    camJoin(request.getCamJoinRequest());
+                } else if (request.hasReportRequest()) {
+                    report(request.getReportRequest());
+                }
+            } catch (Exception e) {
+                log(String.format("Update {%s} failed", request.getId()));
+                responseObserver.onError(getGRPCException(e));
+                return;
             }
-            response = UpdateResponse.newBuilder()
-                    .addAllTimestamp(timestampValues)
-                    .build();
+
+            valueTS.set(replica, valueTS.get(replica) + 1);
+            log(String.format("VectorTS updated, now: %s", valueTS));
+
+            LogRecord logRecord = LogRecord.newBuilder()
+                        .setReplica(replica)
+                        .setUpdateRequest(request)
+                        .addAllTimestamp(valueTS.getValues())
+                        .build();
+
+            executedLog.add(logRecord);
+            executed.add(request.getId());
+
         } else {
             log(String.format("Update with id {%s} was already received", request.getId()));
-            response = UpdateResponse.newBuilder()
-                    .addAllTimestamp(replicaTS.getValues())
-                    .build();
         }
+
+        response = UpdateResponse.newBuilder()
+                .addAllTimestamp(valueTS.getValues())
+                .build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -248,10 +187,6 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 .setTs(com.google.protobuf.Timestamp.newBuilder()
                 .setSeconds(observationDomain.getTimestamp().getTime() / 1000))
                 .build();
-    }
-
-    public void ctrlInit(InitRequest request) {
-        InitResponse.newBuilder().build();
     }
 
     @Override
