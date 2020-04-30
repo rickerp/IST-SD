@@ -27,8 +27,7 @@ public class SiloClientFrontend {
             else {
                 ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(path));
                 int r = random.nextInt(servers.size());
-                String[] aux = servers.get(r).getPath().split("/");
-                path += "/" + aux[aux.length - 1];
+                path = servers.get(r).getPath();
             }
 
             ZKRecord record = zkNaming.lookup(path);
