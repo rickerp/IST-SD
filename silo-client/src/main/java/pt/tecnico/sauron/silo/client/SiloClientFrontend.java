@@ -23,6 +23,7 @@ public class SiloClientFrontend {
 
     final String prefix = "/grpc/sauron/silo";
     boolean reconnect = false;
+    int serverInstance;
 
     HashMap<GeneratedMessageV3, QueryResponse> cache = new HashMap<>();
     Queue<GeneratedMessageV3> lru = new LinkedList<>();
@@ -32,10 +33,11 @@ public class SiloClientFrontend {
         try {
             zkNaming = new ZKNaming(zHost, Integer.toString(zPort));
             String path = prefix;
+            serverInstance = instance;
             Random random = new Random();
 
-            if (instance != -1)
-                path += "/" + instance;
+            if (serverInstance != -1)
+                path += "/" + serverInstance;
             else {
                 ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(path));
                 int r = random.nextInt(servers.size());
@@ -74,13 +76,19 @@ public class SiloClientFrontend {
                 return UpdateResponse.getDefaultInstance();
 
             } catch (StatusRuntimeException e) {
-                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE && reconnect
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE
                 ) {
                     try {
                         channel.shutdownNow();
                         ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(prefix));
-                        int r = new Random().nextInt(servers.size());
-                        String path = servers.get(r).getPath();
+                        String path = "";
+
+                        if (reconnect) {
+                            int r = new Random().nextInt(servers.size());
+                            path = servers.get(r).getPath();
+                        }
+                        else
+                            path = prefix + "/" + serverInstance;
 
                         ZKRecord record = zkNaming.lookup(path);
                         final String target = record.getURI();
@@ -91,7 +99,7 @@ public class SiloClientFrontend {
                             stub.update(clientLogin);
 
                     } catch (ZKNamingException zke) {
-                        zke.printStackTrace();
+                        throw e;
                     }
                 }
                 else {
@@ -127,13 +135,19 @@ public class SiloClientFrontend {
                 return queryResponse;
 
             } catch (StatusRuntimeException e) {
-                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE && reconnect
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE
                 ) {
                     try {
                         channel.shutdownNow();
                         ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(prefix));
-                        int r = new Random().nextInt(servers.size());
-                        String path = servers.get(r).getPath();
+                        String path = "";
+
+                        if (reconnect) {
+                            int r = new Random().nextInt(servers.size());
+                            path = servers.get(r).getPath();
+                        }
+                        else
+                            path = prefix + "/" + serverInstance;
 
                         ZKRecord record = zkNaming.lookup(path);
                         final String target = record.getURI();
@@ -141,7 +155,8 @@ public class SiloClientFrontend {
                         stub = SiloGrpc.newBlockingStub(channel);
 
                     } catch (ZKNamingException zke) {
-                        zke.printStackTrace();
+                        System.out.println("err" +  zke);
+                        throw e;
                     }
                 }
                 else {
