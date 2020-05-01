@@ -1,15 +1,13 @@
 package pt.tecnico.sauron.silo.client;
 
+import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import pt.tecnico.sauron.silo.grpc.*;
 
-import java.util.HashMap;
-import java.util.Random;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 
 import pt.ulisboa.tecnico.sdis.zk.ZKNaming;
 import pt.ulisboa.tecnico.sdis.zk.ZKNamingException;
@@ -22,21 +20,22 @@ public class SiloClientFrontend {
     TimestampVector timestamp = new TimestampVector(10);
     UpdateRequest clientLogin;
     ZKNaming zkNaming;
-    int serverInstance;
-    final String prefix = "/grpc/sauron/silo";
 
+    final String prefix = "/grpc/sauron/silo";
     boolean reconnect = false;
-    HashMap<String, QueryResponse> cache = new HashMap<>();
+
+    HashMap<GeneratedMessageV3, QueryResponse> cache = new HashMap<>();
+    Queue<GeneratedMessageV3> lru = new LinkedList<>();
+    final int cacheMaxSize = 100;
 
     public SiloClientFrontend(String zHost, int zPort, int instance) {
         try {
             zkNaming = new ZKNaming(zHost, Integer.toString(zPort));
             String path = prefix;
             Random random = new Random();
-            serverInstance = instance;
 
-            if (serverInstance != -1)
-                path += "/" + serverInstance;
+            if (instance != -1)
+                path += "/" + instance;
             else {
                 ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(path));
                 int r = random.nextInt(servers.size());
@@ -107,15 +106,24 @@ public class SiloClientFrontend {
             try {
                 QueryResponse queryResponse = stub.query(queryRequest);
 
-                if (timestamp.compareTo(new TimestampVector(queryResponse.getTimestampList())) > 0)
-                    return cache.get(createCacheKey(queryRequest));
+                if (timestamp.compareTo(new TimestampVector(queryResponse.getTimestampList())) > 0) {
+                    QueryResponse response = cache.get(createCacheKey(queryRequest));
+
+                    return response != null ? response : queryResponse;
+                }
 
                 timestamp.merge(new TimestampVector(queryResponse.getTimestampList()));
 
-                String cacheKey = createCacheKey(queryRequest);
+                GeneratedMessageV3 cacheKey = createCacheKey(queryRequest);
+
+                if (!cache.containsKey(cacheKey)) {
+                    lru.add(cacheKey);
+
+                    if (cache.size() >= cacheMaxSize)
+                        cache.remove(lru.remove());
+                }
 
                 cache.put(cacheKey, queryResponse);
-
                 return queryResponse;
 
             } catch (StatusRuntimeException e) {
@@ -143,24 +151,16 @@ public class SiloClientFrontend {
         }
     }
 
-    private String createCacheKey(QueryRequest queryRequest) {
-        String cacheKey = "";
-        String target;
+    private GeneratedMessageV3 createCacheKey(QueryRequest queryRequest) {
+        GeneratedMessageV3 cacheKey = null;
+        if (queryRequest.hasTraceRequest())
+            cacheKey = queryRequest.getTraceRequest();
 
-        if (queryRequest.hasTraceRequest()) {
-            target = queryRequest.getTraceRequest().getTarget() == Target.CAR ? "car" : "person";
-            cacheKey = queryRequest.getTraceRequest().getId() + "trace" + target;
-        }
+        else if (queryRequest.hasTrackMatchRequest())
+            cacheKey = queryRequest.getTrackMatchRequest();
 
-        else if (queryRequest.hasTrackMatchRequest()) {
-            target = queryRequest.getTrackMatchRequest().getTarget() == Target.CAR ? "car" : "person";
-            cacheKey = queryRequest.getTrackMatchRequest().getId() + "trackMatch" + target;
-        }
-
-        else if (queryRequest.hasTrackRequest()) {
-            target = queryRequest.getTrackRequest().getTarget() == Target.CAR ? "car" : "person";
-            cacheKey = queryRequest.getTrackRequest().getId() + "track" + target;
-        }
+        else if (queryRequest.hasTrackRequest())
+            cacheKey = queryRequest.getTrackRequest();
 
         return cacheKey;
     }
