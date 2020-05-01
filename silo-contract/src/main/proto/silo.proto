@@ -17,6 +17,7 @@ message Observation {
     string id = 2;
     google.protobuf.Timestamp ts = 3;
     string camera_name = 4;
+    CamInfoResponse camInfo = 5;
 }
 //#endregion
 

@@ -208,7 +208,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                     exception.getMessage()
             );
         } else if (exception instanceof CamNotFoundException) {
-            status = Status.NOT_FOUND.withDescription(
+            status = Status.INVALID_ARGUMENT.withDescription(
                     exception.getMessage()
             );
         } else if (exception instanceof SiloArgumentException) {
@@ -280,6 +280,9 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                 .setCameraName(observationDomain.getCamera().getName())
                 .setTs(com.google.protobuf.Timestamp.newBuilder()
                 .setSeconds(observationDomain.getTimestamp().getTime() / 1000))
+                .setCamInfo(CamInfoResponse.newBuilder()
+                        .setLatitude(observationDomain.getCamera().getLatitude())
+                        .setLongitude(observationDomain.getCamera().getLongitude()))
                 .build();
     }
 

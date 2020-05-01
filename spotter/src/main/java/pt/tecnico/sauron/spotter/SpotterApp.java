@@ -223,13 +223,11 @@ public class SpotterApp {
 			return;
 		}
 
-		CamInfoResponse camInfo = client.camInfo(CamInfoRequest.newBuilder().setCameraName(cameraName).build());
-
 		System.out
 				.printf("%s,%s,%s,%s,%s,%s%n", observation.getTarget().toString().toLowerCase(), observation.getId(),
 						Instant.ofEpochSecond(observation.getTs().getSeconds()).atZone(ZoneId.systemDefault())
 								.toLocalDateTime().toString(),
-						observation.getCameraName(), camInfo.getLatitude(), camInfo.getLongitude());
+						observation.getCameraName(), observation.getCamInfo().getLatitude(), observation.getCamInfo().getLongitude());
 	}
 
 	public static Target parseTarget(String target) {
