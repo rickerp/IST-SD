@@ -76,18 +76,12 @@ public class SiloClientFrontend {
 
             } catch (StatusRuntimeException e) {
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE && reconnect
-                    || e.getStatus().getCode() == Status.Code.NOT_FOUND
                 ) {
                     try {
                         channel.shutdownNow();
                         ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(prefix));
-                        String path;
-                        if (!reconnect) {
-                            path = prefix + "/" + serverInstance;
-                        } else {
-                            int r = new Random().nextInt(servers.size());
-                            path = servers.get(r).getPath();
-                        }
+                        int r = new Random().nextInt(servers.size());
+                        String path = servers.get(r).getPath();
 
                         ZKRecord record = zkNaming.lookup(path);
                         final String target = record.getURI();
@@ -125,10 +119,10 @@ public class SiloClientFrontend {
                 return queryResponse;
 
             } catch (StatusRuntimeException e) {
-                if (e.getStatus().getCode() != Status.Code.UNAVAILABLE)
-                    throw e;
-                else {
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE && reconnect
+                ) {
                     try {
+                        channel.shutdownNow();
                         ArrayList<ZKRecord> servers = new ArrayList<>(zkNaming.listRecords(prefix));
                         int r = new Random().nextInt(servers.size());
                         String path = servers.get(r).getPath();
@@ -137,9 +131,13 @@ public class SiloClientFrontend {
                         final String target = record.getURI();
                         channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
                         stub = SiloGrpc.newBlockingStub(channel);
+
                     } catch (ZKNamingException zke) {
                         zke.printStackTrace();
                     }
+                }
+                else {
+                    throw e;
                 }
             }
         }

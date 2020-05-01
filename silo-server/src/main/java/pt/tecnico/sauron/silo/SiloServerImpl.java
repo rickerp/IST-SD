@@ -208,7 +208,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                     exception.getMessage()
             );
         } else if (exception instanceof CamNotFoundException) {
-            status = Status.INVALID_ARGUMENT.withDescription(
+            status = Status.NOT_FOUND.withDescription(
                     exception.getMessage()
             );
         } else if (exception instanceof SiloArgumentException) {
