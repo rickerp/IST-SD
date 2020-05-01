@@ -76,7 +76,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                     //throw new RuntimeException("failed");
                 }
             }
-        }, gossipInterval * 1000, gossipInterval * 1000);
+        }, 0 , gossipInterval * 1000);
     }
 
     @Override
