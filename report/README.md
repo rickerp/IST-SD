@@ -17,27 +17,26 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 <img src="https://avatars0.githubusercontent.com/u/10373500?s=460&u=d55b8ec9104eaf2eac56d74f602580fe90ecfb29&v=4" height="150px" /> <img src="https://avatars1.githubusercontent.com/u/33103241?s=460&u=db5a1233e3f142ba48fd94532cfbf504ef14a13e&v=4" height="150px" /> <img src="https://avatars1.githubusercontent.com/u/32230933?s=460&u=d50670ea007c13559cbe4cd18aba7115436df700&v=4" height="150px" />
 
 
-## Melhorias da primeira parte
 
-- [spot * ordering by id](https://github.com/tecnico-distsys/T19-Sauron/commit/2f55891deda112f8bbbeb74b4f51093a24e17d21#diff-781a33c089feb1b4b74da871c8f53447L167-R170)
-- [error handling (error mapping for gRPC)](https://github.com/tecnico-distsys/T19-Sauron/commit/282d6c1b22ea22548639189b3c583c04cf4c8f9b)
+  
 
+## Melhorias da primeira parte 
 
-## Modelo de faltas
+- [spot * ordering by id](https://github.com/tecnico-distsys/T19-Sauron/commit/2f55891deda112f8bbbeb74b4f51093a24e17d21#diff-781a33c089feb1b4b74da871c8f53447L167-R170)- [error handling (error mapping for gRPC)](https://github.com/tecnico-distsys/T19-Sauron/commit/282d6c1b22ea22548639189b3c583c04cf4c8f9b) 
 
-#### Faltas toleradas 
+  
 
-* Servidor crasha, enviando anteriormente uma mensagem gossip
-* Estando uma cliente conectada a um servidor, apos esse mesmo crashar a cliente liga-se a outro servidor disponivel (caso nenhum servidor seja especificado no inicio)
-* Se especificado o servidor no cliente, e esse mesmo crashar e voltar, ele reconecta-se. Caso o servidor mude de enedereco durante a execucao o cliente tambem se reconecta
-* Caso o servidor retorne uma resposta destatualizada a uma query, o cliente usufrui de uma cache
-* Através das gossip messages, se um servidor crashar recupera todos os updates das outras replicas
+## Modelo de faltas 
 
-#### Faltas não toleradas
+#### Faltas toleradas  
 
-* O servidor crasha não enviando anteriormente uma mensagem gossip
+* Servidor vai a baixo, enviando anteriormente uma mensagem gossip* Estando uma cliente conectada a um servidor, após esse mesmo for a baixo o cliente liga-se a outro servidor disponível (caso nenhum servidor seja especificado no inicio)* Se especificado o servidor no cliente, e esse mesmo crashar e voltar, ele reconecta-se. Caso o servidor mude de endereço durante a execução o cliente também se reconecta* Caso o servidor retorne uma resposta desatualizada a uma query, o cliente usufrui de uma cache* Através das gossip messages, se um servidor for a baixo, recupera todos os updates das outras replicas 
 
-## Solução
+#### Faltas não toleradas 
+
+* O servidor vai a baixo não enviando anteriormente uma mensagem gossip 
+
+## Solução 
 
 ![Solução](./solution.png)
 
@@ -61,20 +60,23 @@ Existem dois clientes, X e Y.
     
 Desta maneira, o cliente X e Y comunicaram através de um sistema distribuído!
 
-## Protocolo de replicação
+  
 
-O protocolo usado é baseado na _gossip architecture_ (ver secção 18.4.1 do livro) com algumas alterações, nomeadamente a remoção do `Update log`, 
+## Protocolo de replicação 
 
-Em cada réplica, a cada ***x*** segundos (***x*** configurável), será enviada uma mensagem **gossip** para todas as outras réplicas encontradas atavés do **zkNaming**. Estas mensagens incluem a número da réplica emissora, um **log** com os updates mais recentes para cada réplica, não incluindo updates que estas já tenham, e um **timestamp** que refere o ultimo estado conhecido de cada réplica, por parte da réplica emissora.
-Ao receber uma *gossip message*, a réplica adiciona os updates recebidos se esta já não os tiver. Atualiza o seu timestamp se houve updates válidos.
+O protocolo usado é baseado na _gossip architecture_ (ver secção 18.4.1 do livro) com algumas alterações, nomeadamente a remoção do `Update log`,  
 
+Em cada réplica, a cada ***x*** segundos (***x*** configurável), será enviada uma mensagem **gossip** para todas as outras réplicas encontradas através do **zkNaming**. Estas mensagens incluem a número da réplica emissora, um **log** com os updates mais recentes para cada réplica, não incluindo updates que estas já tenham, e um **timestamp** que refere o ultimo estado conhecido de cada réplica, por parte da réplica emissora. Ao receber uma *gossip message*, a réplica adiciona os updates recebidos se esta já não os tiver. Atualiza o seu timestamp se houve updates válidos. 
 
-## Opções de implementação
+  
 
-_(Descrição de opções de implementação, incluindo otimizações e melhorias introduzidas)_
+## Opções de implementação 
 
+A remoção do `Update log` foi devido ao facto que não existem dependências causais entre updates. Assim, os updates podem ser efetuados logo que chegam ao servidor. Foi criada uma tabela com os timestamps de cada replica (em cada replica) para quando uma gossip message é enviada, só é enviado updates que segundo essa mesma tabela, as outras replicas não tenham. Quando recebido uma gossip message, a entrada da tabela da replica emissora é atualizada segundo o timestamp recebido. 
 
+  
 
-## Notas finais
+## Notas finais 
 
-_(Algo mais a dizer?)_
+_(Algo mais a dizer?)_ 
+
