@@ -1,4 +1,4 @@
-# Guião de Demonstração
+# Guião de Demonstração da Primeira Entrega
 
 ## 1. Preparação do Sistema
 
@@ -200,7 +200,7 @@ car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 ```
 
-# Guião de Demonstração (multi réplica)
+# Guião de Demonstração (multi réplica) para a Segunda Entrega
 
 ## 1. Preparação do Sistema
 
@@ -271,33 +271,31 @@ car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 
 Podemos observar que o eye registou a suas observações na réplica 1, e através de mensagens gossip a réplica 1 propagou esta informação até à réplica 2, como pode ser observado através dos comandos do spotter.
 
-Agora para verificar o funcionamento da cache do cliente vamos terminar o servidor 2. Para isso basta ir até ao terminal do mesmo e premir enter ou CTRL-C. Em seguida volta-se a executar o comando:
+Agora para verificar o funcionamento da cache do cliente vamos terminar o servidor 2. Para isso basta ir até ao terminal do mesmo e premir `ENTER`. Em seguida volta-se a executar o comando:
 
 ```
 $ mvn exec:java -Dinstance=2
 ```
 
 De modo a gerar uma nova execução do servidor mas esta perdeu toda a informação que tinha anteriormente o que nos vais permitir observar o funcionamento da cache.
-Para tal vamos correr no spotter os seguintes comandos( sem que sejam enviadas mensagens gossip com uptades, caso tal aconteca volte a terminar o servidor e correr os comandos):
+Para tal vamos correr no spotter os seguintes comandos (sem que sejam enviadas mensagens gossip com uptades, caso tal aconteca volte a terminar o servidor e correr os comandos):
 
 ```
 > spot person 171
 
 > spot person 123
 person,123,<timestamp>,Tagus,38.737613,-9.303164
-> spot car BBBB77
-
 > spot car AABB77
 car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 ```
 
-Podemos observar que os comandos 1 e 3 como não foram executados antes de o servidor ser terminado o seu resultado não foi armazenado na cache. Mas que os comandos 2 e 4 foram executados e armazenada a sua informação.
+Podemos observar que, como o 1º comando não foi previamente executado antes de o servidor ser terminado, o seu resultado não foi armazenado na cache. Mas o 2º e 3º comandos foram executados e a sua informação armazenada.
 
 Se agora esperar até haver a troca das mensagens gossip, o servidor 2 vai recuperar a informação que tinha perdido e ao executar de novo os comandos no spotter observamos que todos vão receber resposta.
 
 ### 2. _Troca de réplica_
 
-Vamos agora mostar um cliente a trocar de réplica quando a réplica à qual este se encontrava ligada crasha. Para tal não pode ser especificada uma réplica na criação do cliente.
+Vamos agora demonstrar um cliente a trocar de réplica quando a réplica à qual este se encontrava ligada crasha. Para tal não pode ser especificada uma réplica na criação do cliente.
 
 Primeiro crie 2 réplicas, executando os seguintes comandos na diretoria _silo-server_ :
 
@@ -315,7 +313,7 @@ Em seguida crie um eye sem especificar a réplica ao qual ele se liga:
 $ eye localhost 2181 Tagus 38.737613 -9.303164
 ```
 
-Poderá observar num dos terminais a execução de um update(Cam_join), esta réplica foi escolhida aleatoriamente entre as réplicas disponiveis.
+Poderá observar num dos terminais a execução de um update (que se refere a um _cam join_) - a réplica correspondente e esse terminal foi escolhida aleatoriamente entre as réplicas disponiveis.
 
 Execute alguns comandos de report, por exemplo:
 
@@ -331,12 +329,12 @@ person,123
 
 ```
 
-Aguarde até que as gossip messages cheguem ao outro terminal (no terminal aparecerá uma mensagem: Received uptade{UUID} from gossip).
+Aguarde até que as gossip messages cheguem ao outro terminal (no terminal aparecerá uma mensagem: `Received update{UUID} from gossip`).
 
-Agora termine a execução do terminal referente á réplica a que o eye se conectou, este terminal
-tem mensagens do tipo Received uptade{UUID}. Repare que não são iguais ás mensagens presentes no outro terminal pois estas são do tipo Received uptade{UUID} from gossip.
+Agora termine a execução do terminal referente à réplica a que o eye se conectou, este terminal
+tem mensagens do tipo `Received update{UUID}`. Repare que não são iguais ás mensagens presentes no outro terminal pois estas são do tipo `Received update{UUID} from gossip`.
 
-Para terminar a execução da réplica basta premir enter ou CTRL-C no terminal com as mensagens Received uptade{UUID}.
+Para terminar a execução da réplica basta premir `ENTER` no terminal com as mensagens `Received update{UUID}`.
 
 Agora no eye realize os seguintes comandos:
 
