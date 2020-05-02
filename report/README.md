@@ -24,14 +24,14 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 #### Faltas toleradas
 
 - Quando um servidor vai a baixo, enviando anteriormente uma mensagem gossip, evita que se perca a informação obtida pelo mesmo. Visto que o servidor antes de cair conseguiu enviar mensagens gossip ao restantes servidores, conseguiu assim propagar a informação que os clientes escreveram nele com os restantes servidores
-- Estando um cliente conectado a um servidor, após esse mesmo ir abaixo o cliente liga-se a outro servidor disponível (caso nenhum servidor seja especificado no inicio da execução)
+- Estando um cliente conectado a um servidor, após esse mesmo servidor ir abaixo o cliente liga-se a outro servidor disponível (caso nenhum servidor seja especificado no inicio da execução)
 - Se especificado o servidor ao qual o cliente se liga, e esse mesmo crashar e voltar a execução, ele reconecta-se ao mesmo. Caso o servidor mude de endereço durante a execução o cliente também se reconecta ao mesmo servidor
 - Caso o servidor retorne uma resposta desatualizada a uma query (timestamp do servidor inferior ao timestamp do cliente), o cliente usufrui de uma cache que permite utilizar observações anteriores de modo a evitar possíveis incoerências com as mesmas. Esta cache é limitada, e sendo assim optamos por implementar uma política de substituição Least Recently Used de modo a que observações mais antigas acabem por ser ignoradas sendo que as mais recentes permanecem na cache
-- Através de gossip messages, se um servidor cair, recupera todos os updates realizados anteriormente pelas restantes réplicas
+- Se um servidor cair, ao voltar a execução, recupera todos os updates realizados anteriormente pelas restantes réplicas, isto porque o servidor ao voltar em execução acabará por receber mensagens gossips dos outros servidores fazendo com que o mesmo acabe por ficar atualizado
 
 #### Faltas não toleradas
 
-- Caso um servidor vá abaixo sem que propague os updates efetuados sobre ele através de gossip messages, toda esta informação é perdida visto que não foi propagada para os restantes os servidores
+- Caso um servidor vá abaixo sem que propague os updates efetuados sobre ele através de gossip messages, toda esta informação é perdida visto que não foi propagada para os restantes os servidores. Esta falta não é tolerável visto que o servidor pode cair a qualquer altura sem qualquer aviso e sendo assim não é possível trocar mensagens gossip com os restantes servidores de modo a atualizar os restantes com as últimas atualizações realizadas pelos clientes
 
 ## Solução
 
