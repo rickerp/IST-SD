@@ -8,8 +8,8 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 
 | Número | Nome              | Utilizador                                    | Correio eletrónico                                                                      |
 | ------ | ----------------- | --------------------------------------------- | --------------------------------------------------------------------------------------- |
-| 90699  | Afonso Matos      | [afonsomatos](https://github.com/afonsomatos) | [afonsolfmatos@gmail.com](mailto:afonsolfmatos@gmail.com)                               |
-| 90741  | João Tomás Lopes  | [tomlopes](https://github.com/tomlopes)       | [joaotomaslopes@hotmail.com](mailto:joaotomaslopes@hotmail.com)                         |
+| 90699  | Afonso Matos      | [afonsomatos](https://github.com/afonsomatos) | [afonsolfmatos@tecnico.ulisboa.pt](mailto:afonsolfmatos@tecnico.ulisboa.pt)                               |
+| 90741  | João Tomás Lopes  | [tomlopes](https://github.com/tomlopes)       | [joaotomaslopes@tecnico.ulisboa.pt](mailto:joaotomaslopes@tecnico.ulisboa.pt)                         |
 | 90775  | Ricardo Fernandes | [rickerp](https://github.com/rickerp)         | [ricardo.s.fernandes@tecnico.ulisboa.pt](mailto:ricardo.s.fernandes@tecnico.ulisboa.pt) |
 
 <img src="https://avatars0.githubusercontent.com/u/10373500?s=460&u=d55b8ec9104eaf2eac56d74f602580fe90ecfb29&v=4" height="150px" /> <img src="https://avatars1.githubusercontent.com/u/33103241?s=460&u=db5a1233e3f142ba48fd94532cfbf504ef14a13e&v=4" height="150px" /> <img src="https://avatars1.githubusercontent.com/u/32230933?s=460&u=d50670ea007c13559cbe4cd18aba7115436df700&v=4" height="150px" />
@@ -23,15 +23,16 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 
 #### Faltas toleradas
 
-- Quando um servidor vai a baixo, enviando anteriormente uma mensagem gossip, evita que se perca a informação obtida pelo mesmo. Visto que o servidor antes de cair conseguiu enviar mensagens gossip ao restantes servidores, conseguiu assim propagar a informação que os clientes escreveram nele com os restantes servidores
-- Estando um cliente conectado a um servidor, após esse mesmo servidor ir abaixo o cliente liga-se a outro servidor disponível (caso nenhum servidor seja especificado no inicio da execução)
-- Se especificado o servidor ao qual o cliente se liga, e esse mesmo crashar e voltar a execução, ele reconecta-se ao mesmo. Caso o servidor mude de endereço durante a execução o cliente também se reconecta ao mesmo servidor
-- Caso o servidor retorne uma resposta desatualizada a uma query (timestamp do servidor inferior ao timestamp do cliente), o cliente usufrui de uma cache que permite utilizar observações anteriores de modo a evitar possíveis incoerências com as mesmas. Esta cache é limitada, e sendo assim optamos por implementar uma política de substituição Least Recently Used de modo a que observações mais antigas acabem por ser ignoradas sendo que as mais recentes permanecem na cache
-- Se um servidor cair, ao voltar a execução, recupera todos os updates realizados anteriormente pelas restantes réplicas, isto porque o servidor ao voltar em execução acabará por receber mensagens gossips dos outros servidores fazendo com que o mesmo acabe por ficar atualizado
+- Quando uma réplica vai a baixo, enviando anteriormente uma mensagem gossip, evita que se percam os updates nela efetuados.
+Visto que a réplica antes de cair conseguiu enviar mensagens gossip às restantes réplicas, conseguiu assim propagar a informação que os clientes submeteram.
+- Estando um cliente conectado a uma réplica, após essa mesma réplica ir abaixo o cliente liga-se a outra réplica disponível (caso nenhuma réplica seja especificada no início da execução).
+- Se especificado a réplica ao qual o cliente se liga, e essa mesma crashar e voltar a execução, o cliente reconecta-se à mesma (que entretanto pode ter mudado de endereço).
+- Caso a réplica retorne uma resposta desatualizada a uma query, o cliente retorna uma resposta anterior guardada de modo a evitar possíveis incoerências. 
+- Se a réplica crashar, ao voltar a execução, recupera todos os updates realizados anteriormente pelas restantes réplicas.
 
 #### Faltas não toleradas
 
-- Caso um servidor vá abaixo sem que propague os updates efetuados sobre ele através de gossip messages, toda esta informação é perdida visto que não foi propagada para os restantes os servidores. Esta falta não é tolerável visto que o servidor pode cair a qualquer altura sem qualquer aviso e sendo assim não é possível trocar mensagens gossip com os restantes servidores de modo a atualizar os restantes com as últimas atualizações realizadas pelos clientes
+- Caso um servidor vá abaixo sem que propague os updates efetuados sobre ele através de gossip messages, toda esta informação é perdida visto que não foi propagada para os restantes os servidores. Esta falta não é tolerável visto que a réplica pode cair a qualquer altura sem qualquer aviso e sendo assim não é possível trocar mensagens gossip com os restantes servidores de modo a atualizar os restantes com as últimas atualizações realizadas pelos clientes
 
 ## Solução
 
@@ -60,12 +61,47 @@ Desta maneira, o cliente X e Y comunicaram através de um sistema distribuído!
 
 ## Protocolo de replicação
 
-O protocolo usado é baseado na _gossip architecture_ (ver secção 18.4.1 do livro) com algumas alterações, nomeadamente a remoção do `Update log`
+O protocolo usado é uma variação do  _gossip protocol_ (ver secção 18.4.1 do livro). 
 
-Em cada réplica, a cada **_x_** segundos (**_x_** configurável), será enviada uma mensagem **gossip** para todas as outras réplicas encontradas através do **zkNaming**. Estas mensagens incluem o número da réplica emissora, um **log** com os updates mais recentes para cada réplica, não incluindo updates que estas já tenham, e um **timestamp** que refere o ultimo estado conhecido de cada réplica, por parte da réplica emissora. Ao receber uma _gossip message_, a réplica adiciona os updates recebidos se esta já não os tiver efetuado. Atualizando o seu timestamp caso haja updates válidos.
+Cada réplica possui várias estruturas:
+* **Silo Backend** - O _Value_ como visto no _gossip protocol_. Esta estrutura é o objeto de todas as updates e queries.
+Guarda observações e câmeras.
+* **Update Log** - Uma lista com todos os updates aplicados no Silo Backend dentro desta réplica.
+* **Replica Timestamp** - Igual ao _Value Timestamp_ do _gossip_. Um timestamp vetorial que reflete o estado atual do
+_Silo Backend_.
+* **Timestamp Table** - Uma tabela de timestamps vetoriais das réplicas restantes.
+    
+![Replica](./replica.png)
+
+* Todas as réplicas, ao serem iniciadas, começam com a Replica Timestamp e o Timestamp Table a zero, e o Update Log vazio.
+
+* **Ao receber um update dum cliente**, a réplica adiciona-a ao Update Log. Aplica o update ao Silo Backend imediatamente e
+atualiza a Replica Timestamp incrementando a posição correspondente à réplica atual.
+
+* **Para uma réplica A enviar um gossip para réplica B**, a réplica A preenche a mensagem de gossip com os Updates do Log
+que podem estar em falta na réplica B. A réplica A sabe esta informação através do último timestamp vetorial conhecido
+da réplica B, guardada no Timestamp Table.
+
+* **Quando a réplica B recebe um gossip da réplica A**, a réplica B atualiza o timestamp vetorial da réplica A no
+Timestamp Table com o recebido dentro da mensagem. Os Updates, também recebidos, são aplicados ao _Silo Backend_ e
+adicionados ao Log, somente se não tiverem já sido executados. A réplica B atualiza o seu Replica Timestamp
+para refletir os novos Updates.
+
+* A cada **_x_** segundos (**_x_** configurável), cada réplica envia uma mensagem **gossip** para todas as outras réplicas encontradas
+através do gestor de nomes.
 
 ## Opções de implementação
 
-A remoção do `Update log` deveu-se ao facto que não existem dependências causais entre updates. Assim, os updates podem ser efetuados logo que chegem ao servidor. Foi criada uma tabela com os timestamps de cada réplica (em cada réplica) para quando uma gossip message é enviada, só são enviado updates que segundo essa mesma tabela, as outras réplicas não os tenham efetuado. Quando recebido uma gossip message, a entrada da tabela da replica emissora é atualizada segundo o timestamp recebido.
+* O cliente contém uma **cache** de pedido-resposta guardado após cada query.
+Quando o cliente recebe uma resposta mais antiga do que uma já obtida, retorna esta resposta anterior mais atualizada.
+A cache tem um limite máximo de pedido-resposta que guarda. Segue uma política LRU para decidir quais os
+pedido-resposta a discartar da cache quando ultrapassa um certo limite.
+* O _Update Log_ típico do protocolo original sofre umas nuances. Os updates são aplicados imediatamente,
+porque não existem dependências causais. O Log utilizado no nosso protocolo desempenha a função
+de *guardar* os updates feitos para que possam ser partilhados com as outras réplicas.
+É necessário guardar todos os updates porque não existe persistência de dados. Desta maneira,
+asseguramos uma maneira de outras réplicas obterem todos os updates desde o início.
 
 ## Notas finais
+
+Não há.

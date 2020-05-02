@@ -23,6 +23,9 @@
         <!-- instance number -->
         <instance>1</instance>
 
+		<!-- Number of seconds between each gossip round -->
+		<interval>30</interval>
+
         <server.host>localhost</server.host>
         <server.port>808${instance}</server.port>
         <server.path>/grpc/sauron/silo/${instance}</server.path>
@@ -86,6 +89,7 @@
 						<argument>${server.host}</argument>
 						<argument>${server.port}</argument>
 						<argument>${instance}</argument>
+						<argument>${interval}</argument>
 					</arguments>
 				</configuration>
 			</plugin>
