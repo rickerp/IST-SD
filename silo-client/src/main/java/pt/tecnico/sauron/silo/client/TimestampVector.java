@@ -23,14 +23,6 @@ public class TimestampVector implements Comparable<TimestampVector> {
         return values;
     }
 
-    public Integer get(Integer position) {
-        return values.get(position - 1);
-    }
-
-    public void set(Integer position, Integer value) {
-        this.values.set(position - 1, value);
-    }
-
     @Override
     public int compareTo(TimestampVector other) {
         int result = 0;
