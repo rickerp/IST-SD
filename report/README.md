@@ -26,13 +26,13 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 - Quando uma réplica vai a baixo, enviando anteriormente uma mensagem gossip, evita que se percam os updates nela efetuados.
 Visto que a réplica antes de cair conseguiu enviar mensagens gossip às restantes réplicas, conseguiu assim propagar a informação que os clientes submeteram.
 - Estando um cliente conectado a uma réplica, após essa mesma réplica ir abaixo o cliente liga-se a outra réplica disponível (caso nenhuma réplica seja especificada no início da execução).
-- Se especificado a réplica ao qual o cliente se liga, e essa mesma crashar e voltar a execução, o cliente reconecta-se à mesma (que entretanto pode ter mudado de endereço).
+- Se especificada a réplica ao qual o cliente se liga, e essa mesma crashar e voltar a execução, o cliente reconecta-se à mesma (que entretanto pode ter mudado de endereço).
 - Caso a réplica retorne uma resposta desatualizada a uma query, o cliente retorna uma resposta anterior guardada de modo a evitar possíveis incoerências. 
 - Se a réplica crashar, ao voltar a execução, recupera todos os updates realizados anteriormente pelas restantes réplicas.
 
 #### Faltas não toleradas
 
-- Caso um servidor vá abaixo sem que propague os updates efetuados sobre ele através de gossip messages, toda esta informação é perdida visto que não foi propagada para os restantes os servidores. Esta falta não é tolerável visto que a réplica pode cair a qualquer altura sem qualquer aviso e sendo assim não é possível trocar mensagens gossip com os restantes servidores de modo a atualizar os restantes com as últimas atualizações realizadas pelos clientes
+- Caso um servidor vá abaixo sem que propague os updates efetuados sobre ele através de gossip messages, toda esta informação é perdida visto que não foi propagada para os restantes servidores. Esta falta não é tolerável visto que a réplica pode cair a qualquer altura sem qualquer aviso e sendo assim não é possível trocar mensagens gossip com os restantes servidores de modo a atualizar os restantes com as últimas atualizações realizadas pelos clientes
 
 ## Solução
 
@@ -95,7 +95,7 @@ através do gestor de nomes.
 * O cliente contém uma **cache** de pedido-resposta guardado após cada query.
 Quando o cliente recebe uma resposta mais antiga do que uma já obtida, retorna esta resposta anterior mais atualizada.
 A cache tem um limite máximo de pedido-resposta que guarda. Segue uma política LRU para decidir quais os
-pedido-resposta a discartar da cache quando ultrapassa um certo limite.
+pedido-resposta a descartar da cache quando ultrapassa um certo limite.
 * O _Update Log_ típico do protocolo original sofre umas nuances. Os updates são aplicados imediatamente,
 porque não existem dependências causais. O Log utilizado no nosso protocolo desempenha a função
 de *guardar* os updates feitos para que possam ser partilhados com as outras réplicas.
