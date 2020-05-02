@@ -1,4 +1,4 @@
-# Guião de Demonstração (exemplo)
+# Guião de Demonstração
 
 ## 1. Preparação do Sistema
 
@@ -33,9 +33,9 @@ Cada câmera vai ter o seu ficheiro de entrada próprio com observações já de
 Para isso basta ir à diretoria _eye_ e correr os seguintes comandos:
 
 ```
-$ eye localhost 2181 Tagus 38.737613 -9.303164 < input01.txt
-$ eye localhost 2181 Alameda 30.303164 -10.737613 < input03.txt
-$ eye localhost 2181 Lisboa 32.737613 -15.303164 < input04.txt
+$ eye localhost 2181 Tagus 38.737613 -9.303164 < ../demo/input01.txt
+$ eye localhost 2181 Alameda 30.303164 -10.737613 < ../demo/input03.txt
+$ eye localhost 2181 Lisboa 32.737613 -15.303164 < ../demo/input04.txt
 ```
 
 **Nota:** Para correr o script _eye_ é necessário fazer `mvn install` e adicionar ao _PATH_ ou utilizar diretamente os executáveis gerados na diretoria `target/appassembler/bin/`.
@@ -199,3 +199,153 @@ person,123,<timestamp>,Tagus,38.737613,-9.303164
 car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 ```
+
+# Guião de Demonstração (multi réplica)
+
+## 1. Preparação do Sistema
+
+Para testar a aplicação e todos os seus componentes, é necessário preparar um ambiente com dados para proceder à verificação dos testes.
+
+### 1.1. Compilar o Projeto
+
+Primeiramente, é necessário instalar as dependências necessárias para o _silo_ e os clientes (_eye_ e _spotter_) e compilar estes componentes.
+Para isso, basta ir à diretoria _root_ do projeto e correr o seguinte comando:
+
+```
+$ mvn clean install -DskipTests
+```
+
+Com este comando já é possível analisar se o projeto compila na íntegra.
+
+### 1.2. _Silo_
+
+Para proceder aos testes, é preciso lançar execuções dos servidores _silo_.
+Para isso basta ir à diretoria _silo-server_ e executar:
+
+```
+$ mvn exec:java -Dinstance=<instance>
+```
+
+Este comando vai colocar o _silo_ no endereço _localhost_ e na porta _808\$(instance)_.
+Vamos então criar 2 réplicas de modo a realizar os testes. Para tal deve correr os seguintes comandos em 2 terminais distintos:
+
+```
+$ mvn exec:java -Dinstance=1
+```
+
+```
+$ mvn exec:java -Dinstance=2
+```
+
+### 1.3. _Eye_
+
+Vamos registar 1 câmara e as respetivas observações.
+Para isso basta ir à diretoria _eye_ e correr o seguinte comando:
+
+```
+$ eye localhost 2181 Tagus 38.737613 -9.303164 1 < ../demo/input01.txt
+```
+
+**Nota:** Para correr o script _eye_ é necessário fazer `mvn install` e adicionar ao _PATH_ ou utilizar diretamente os executáveis gerados na diretoria `target/appassembler/bin/`.
+
+Depois de executar o comando acima poderá verificar no terminal da instância 1 do servidor que foram executados 3 uptades. O primeiro relativo ao cam_join do eye e os outros 2 a 2 conjuntos de observações.
+Passados cerca de 30 segundos observará que o terminal da réplica 2 informa a chegada de 3 uptades através de mensagens gossip.
+
+### 1.4. _Spotter_
+
+Vamos abrir um spotter na réplica 2.
+Para isso basta ir à diretoria _spotter_ e correr o seguinte comando:
+
+```
+$ spotter localhost 2181 2
+```
+
+Agora ao correr os seguintes comandos:
+
+```
+> spot person 123
+person,123,<timestamp>,Tagus,38.737613,-9.303164
+> spot car AABB77
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+```
+
+Podemos observar que o eye registou a suas observações na réplica 1, e através de mensagens gossip a réplica 1 propagou esta informação até à réplica 2, como pode ser observado através dos comandos do spotter.
+
+Agora para verificar o funcionamento da cache do cliente vamos terminar o servidor 2. Para isso basta ir até ao terminal do mesmo e premir enter ou CTRL-C. Em seguida volta-se a executar o comando:
+
+```
+$ mvn exec:java -Dinstance=2
+```
+
+De modo a gerar uma nova execução do servidor mas esta perdeu toda a informação que tinha anteriormente o que nos vais permitir observar o funcionamento da cache.
+Para tal vamos correr no spotter os seguintes comandos( sem que sejam enviadas mensagens gossip com uptades, caso tal aconteca volte a terminar o servidor e correr os comandos):
+
+```
+> spot person 171
+
+> spot person 123
+person,123,<timestamp>,Tagus,38.737613,-9.303164
+> spot car BBBB77
+
+> spot car AABB77
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+```
+
+Podemos observar que os comandos 1 e 3 como não foram executados antes de o servidor ser terminado o seu resultado não foi armazenado na cache. Mas que os comandos 2 e 4 foram executados e armazenada a sua informação.
+
+Se agora esperar até haver a troca das mensagens gossip, o servidor 2 vai recuperar a informação que tinha perdido e ao executar de novo os comandos no spotter observamos que todos vão receber resposta.
+
+### 2. _Troca de réplica_
+
+Vamos agora mostar um cliente a trocar de réplica quando a réplica à qual este se encontrava ligada crasha. Para tal não pode ser especificada uma réplica na criação do cliente.
+
+Primeiro crie 2 réplicas, executando os seguintes comandos na diretoria _silo-server_ :
+
+```
+$ mvn exec:java -Dinstance=1
+```
+
+```
+$ mvn exec:java -Dinstance=2
+```
+
+Em seguida crie um eye sem especificar a réplica ao qual ele se liga:
+
+```
+$ eye localhost 2181 Tagus 38.737613 -9.303164
+```
+
+Poderá observar num dos terminais a execução de um update(Cam_join), esta réplica foi escolhida aleatoriamente entre as réplicas disponiveis.
+
+Execute alguns comandos de report, por exemplo:
+
+```
+person,123
+
+person,1234
+
+person,123
+
+person,123
+
+
+```
+
+Aguarde até que as gossip messages cheguem ao outro terminal (no terminal aparecerá uma mensagem: Received uptade{UUID} from gossip).
+
+Agora termine a execução do terminal referente á réplica a que o eye se conectou, este terminal
+tem mensagens do tipo Received uptade{UUID}. Repare que não são iguais ás mensagens presentes no outro terminal pois estas são do tipo Received uptade{UUID} from gossip.
+
+Para terminar a execução da réplica basta premir enter ou CTRL-C no terminal com as mensagens Received uptade{UUID}.
+
+Agora no eye realize os seguintes comandos:
+
+```
+person,123
+
+person,1234
+
+
+```
+
+Poderá observar que estes comandos estão a ser imediatamente processados pela réplica à qual o eye se conseguiu reconectar. Esta reconexão foi feita escolhendo aleatoriamente uma réplica disponível após verificar que a réplica à qual o eye se encontrava previamente ligado crashou. Sendo que só existia uma réplica disponível a reconexão foi feita com a réplica que não foi terminada.
