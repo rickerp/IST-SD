@@ -32,14 +32,12 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
 
     final int replica;
 
-    public SiloServerImpl(String zHost, String zPort, Integer instance) {
+    public SiloServerImpl(String zHost, String zPort, int instance, int interval) {
         super();
-
         for (int i = 0; i < 10; ++i)
             table.add(new TimestampVector(10));
 
-        replica = instance; 
-        final int gossipInterval = 30; // seconds
+        replica = instance;
 
         Timer t = new Timer();
         t.schedule(new TimerTask() {
@@ -76,7 +74,7 @@ public class SiloServerImpl extends SiloGrpc.SiloImplBase {
                     //throw new RuntimeException("failed");
                 }
             }
-        }, 0 , gossipInterval * 1000);
+        }, 0 , interval * 1000);
     }
 
     @Override
