@@ -101,6 +101,9 @@ porque não existem dependências causais. O Log utilizado no nosso protocolo de
 de *guardar* os updates feitos para que possam ser partilhados com as outras réplicas.
 É necessário guardar todos os updates porque não existe persistência de dados. Desta maneira,
 asseguramos uma maneira de outras réplicas obterem todos os updates desde o início.
+* O _Replica Timestamp_ e _Value Timestamp_ do protocolo original são unidos num único _Replica Timestamp_.
+Visto que não existem dependências causais, o timestamp da réplica reflete sempre os updates já executados no Silo Backend
+(_Value_). Assim, esta distinção colapsa e só um timestamp vetorial passa a ser necessário.
 
 ## Notas finais
 
