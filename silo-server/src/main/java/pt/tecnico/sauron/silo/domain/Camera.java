@@ -37,7 +37,7 @@ public class Camera {
 
     public void setName(String name) throws SiloArgumentException {
         if (!name.matches("^[a-zA-Z0-9]{3,15}$")) {
-            throw new SiloArgumentException("Camera name should be alphanumeric and its length between 3 and 5.");
+            throw new SiloArgumentException("Camera name should be alphanumeric and its length between 3 and 15.");
         }
         this.name = name;
     }
