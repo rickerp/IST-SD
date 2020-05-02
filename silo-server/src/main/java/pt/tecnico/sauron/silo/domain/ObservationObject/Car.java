@@ -1,12 +1,12 @@
 package pt.tecnico.sauron.silo.domain.ObservationObject;
 
-import pt.tecnico.sauron.silo.domain.SiloException;
+import pt.tecnico.sauron.silo.domain.exception.SiloArgumentException;
 
 public class Car extends ObservationObject {
 
     private String plate;
 
-    public Car(String plate) throws SiloException {
+    public Car(String plate) throws SiloArgumentException {
         setPlate(plate);
     }
 
@@ -19,9 +19,9 @@ public class Car extends ObservationObject {
         return plate;
     }
 
-    public void setPlate(String plate) throws SiloException {
+    public void setPlate(String plate) throws SiloArgumentException {
         if (plate.length() != 6) {
-            throw new SiloException("Plate should have 6 characters.");
+            throw new SiloArgumentException("Plate should have 6 characters.");
         }
 
         int letterGroups = 0;
@@ -34,12 +34,12 @@ public class Car extends ObservationObject {
             } else if (group.matches("[0-9][0-9]")) {
                 numberGroups++;
             } else {
-                throw new SiloException("Plate has invalid formatting.");
+                throw new SiloArgumentException("Plate has invalid formatting.");
             }
         }
 
         if (letterGroups > 2 || numberGroups > 2) {
-            throw new SiloException("Plate has invalid formatting.");
+            throw new SiloArgumentException("Plate has invalid formatting.");
         }
 
         this.plate = plate;

@@ -23,7 +23,11 @@ public class BaseIT {
 			String host = testProps.getProperty("server.host");
 			int port = Integer.parseInt(testProps.getProperty("server.port"));
 
-			client = new SiloClientFrontend(host, port);
+			try {
+				client = new SiloClientFrontend(host, port, 1);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
 		} catch (IOException e) {
 			final String msg = String.format("Could not load properties file {}", TEST_PROP_FILE);

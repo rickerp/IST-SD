@@ -32,7 +32,19 @@ public class EyeApp {
 		final float latitude = Float.parseFloat(args[3]);
 		final float longitude = Float.parseFloat(args[4]);
 
-		SiloClientFrontend client = new SiloClientFrontend(host, port);
+		final int instance;
+
+		if (args.length == 6) {
+			instance = Integer.parseInt(args[5]);
+			if (instance < 1 || instance > 9) {
+				System.out.println("Instance must be between 1 and 9");
+				return;
+			}
+		}
+		else
+			instance = -1;
+
+		SiloClientFrontend client = new SiloClientFrontend(host, port, instance);
 
 		try {
 			client.camJoin(

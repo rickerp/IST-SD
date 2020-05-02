@@ -2,3 +2,6 @@
 person,123
 person,171
 car,AABB77
+car,BBBB77
+
+car,AABB77

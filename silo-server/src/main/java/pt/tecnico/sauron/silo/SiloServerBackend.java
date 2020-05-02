@@ -2,8 +2,11 @@ package pt.tecnico.sauron.silo;
 
 import pt.tecnico.sauron.silo.domain.Camera;
 import pt.tecnico.sauron.silo.domain.ObservationDomain;
-import pt.tecnico.sauron.silo.domain.SiloException;
+import pt.tecnico.sauron.silo.domain.exception.CamAlreadyExistsException;
 import pt.tecnico.sauron.silo.domain.ObservationObject.ObservationObject;
+import pt.tecnico.sauron.silo.domain.exception.CamNotFoundException;
+import pt.tecnico.sauron.silo.domain.exception.CoordinateException;
+import pt.tecnico.sauron.silo.domain.exception.SiloArgumentException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -27,21 +30,25 @@ public class SiloServerBackend {
         }
     }
 
-    public Optional<Camera> getCamera(String cameraName) {
+    public Camera getCamera(String cameraName) throws CamNotFoundException {
         synchronized (cameras) {
             return cameras.stream()
                     .filter(x -> x.getName().equals(cameraName))
-                    .findFirst();
+                    .findFirst()
+                    .orElseThrow(() -> new CamNotFoundException(cameraName));
         }
     }
 
-    public void camJoin(String name, float latitude, float longitude) {
+    public void camJoin(String name, float latitude, float longitude) throws CamAlreadyExistsException, CoordinateException, SiloArgumentException {
         synchronized (cameras) {
-            getCamera(name).ifPresentOrElse(cam -> {
-                if (cam.getLatitude() != latitude || cam.getLongitude() != longitude) {
-                    throw new SiloException("Camera with name " + name + " already exists.");
+            try {
+                Camera camera = getCamera(name);
+                if (camera.getLatitude() != latitude || camera.getLongitude() != longitude) {
+                    throw new CamAlreadyExistsException(name);
                 }
-            }, () -> cameras.add(new Camera(name, latitude, longitude)));
+            } catch (CamNotFoundException e) {
+                cameras.add(new Camera(name, latitude, longitude));
+            }
         }
     }
 

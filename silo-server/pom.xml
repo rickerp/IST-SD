@@ -17,13 +17,28 @@
 
 	<properties>
 		<!-- see parent POM for more properties -->
+        <zoo.host>localhost</zoo.host>
+        <zoo.port>2181</zoo.port>
 
+        <!-- instance number -->
+        <instance>1</instance>
+
+		<!-- Number of seconds between each gossip round -->
+		<interval>30</interval>
+
+        <server.host>localhost</server.host>
+        <server.port>808${instance}</server.port>
+        <server.path>/grpc/sauron/silo/${instance}</server.path>
 		<mainclass>pt.tecnico.sauron.silo.SiloServerApp</mainclass>
-		<server.port>8080</server.port>
 	</properties>
 
 	<dependencies>
-		<!-- contract brings gRPC dependencies with it -->
+        <!-- ZK Naming -->
+        <dependency>
+            <groupId>pt.ulisboa.tecnico.sdis</groupId>
+            <artifactId>zk-naming</artifactId>
+            <version>1.0.3</version>
+        </dependency><!-- contract brings gRPC dependencies with it -->
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>silo-contract</artifactId>
@@ -69,7 +84,12 @@
 				<configuration>
 					<mainClass>${mainclass}</mainClass>
 					<arguments>
+						<argument>${zoo.host}</argument>
+						<argument>${zoo.port}</argument>
+						<argument>${server.host}</argument>
 						<argument>${server.port}</argument>
+						<argument>${instance}</argument>
+						<argument>${interval}</argument>
 					</arguments>
 				</configuration>
 			</plugin>

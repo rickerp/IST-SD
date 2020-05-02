@@ -1,127 +1,349 @@
-# Demo
+# Guião de Demonstração da Primeira Entrega
 
-## Setup
-1. Install as shown in [../README.md](../README.md).
+## 1. Preparação do Sistema
 
-2. Execute `silo-server` as shown in [../silo-server/README.md](../silo-server/README.md).
+Para testar a aplicação e todos os seus componentes, é necessário preparar um ambiente com dados para proceder à verificação dos testes.
 
-**Example**
-```sh 
-$ silo-server 8080
+### 1.1. Compilar o Projeto
+
+Primeiramente, é necessário instalar as dependências necessárias para o _silo_ e os clientes (_eye_ e _spotter_) e compilar estes componentes.
+Para isso, basta ir à diretoria _root_ do projeto e correr o seguinte comando:
+
+```
+$ mvn clean install -DskipTests
 ```
 
-3. Execute `eye` as shown in [../eye/README.md](../eye/README.md) for a certain input found in this directory.
+Com este comando já é possível analisar se o projeto compila na íntegra.
 
-**Example**
-```sh
-$ eye localhost 8080 Taguspark -50 50 < input01.txt
+### 1.2. _Silo_
+
+Para proceder aos testes, é preciso o servidor _silo_ estar a correr.
+Para isso basta ir à diretoria _silo-server_ e executar:
+
+```
+$ mvn exec:java
 ```
 
-4. Execute `spotter` as shown in [../spotter/README.md](../spotter/README.md).
-   
-**Example**
-```sh
-$ spotter localhost 8080
+Este comando vai colocar o _silo_ no endereço _localhost_ e na porta _8081_. Visto que a default instance do silo é a 1, logo corre no porto 8081.
+
+### 1.3. _Eye_
+
+Vamos registar 3 câmeras e as respetivas observações.
+Cada câmera vai ter o seu ficheiro de entrada próprio com observações já definidas.
+Para isso basta ir à diretoria _eye_ e correr os seguintes comandos:
+
+```
+$ eye localhost 2181 Tagus 38.737613 -9.303164 < ../demo/input01.txt
+$ eye localhost 2181 Alameda 30.303164 -10.737613 < ../demo/input03.txt
+$ eye localhost 2181 Lisboa 32.737613 -15.303164 < ../demo/input04.txt
 ```
 
-# Examples
+**Nota:** Para correr o script _eye_ é necessário fazer `mvn install` e adicionar ao _PATH_ ou utilizar diretamente os executáveis gerados na diretoria `target/appassembler/bin/`.
 
-```sh
-$ silo-server 8080
+Depois de executar os comandos acima já temos o que é necessário para testar o sistema.
+
+## 2. Teste das Operações
+
+Nesta secção vamos correr os comandos necessários para testar todas as operações.
+Cada subsecção é respetiva a cada operação presente no _silo_.
+
+### 2.1. _cam_join_
+
+Esta operação já foi testada na preparação do ambiente, no entanto ainda é necessário testar algumas restrições.
+
+2.1.1. Teste das câmeras com nome duplicado e coordenadas diferentes.  
+O servidor deve rejeitar esta operação.
+Para isso basta executar um _eye_ com o seguinte comando:
+
+```
+$ eye localhost 2181 Tagus 10.0 10.0
 ```
 
-### **track person**
+2.1.2. Teste do tamanho do nome.  
+O servidor deve rejeitar esta operação.
+Para isso basta executar um _eye_ com o seguinte comando:
 
-```sh
-$ eye localhost 8080 Taguspark -50 50 < input01.txt
-$ spotter localhost 8080
+```
+$ eye localhost 2181 ab 10.0 10.0
+$ eye localhost 2181 abcdefghijklmnop 10.0 10.0
+```
+
+### 2.2. _report_
+
+Esta operação já foi testada acima na preparação do ambiente.
+
+No entanto falta testar o sucesso do comando _zzz_.
+Na preparação foi adicionada informação que permite testar este comando.
+Para testar basta abrir um cliente _spotter_ e correr o comando seguinte:
+
+```
+> trail person 123
+```
+
+O resultado desta operação deve ser 6 observações pelas câmeras _Tagus_, _Alameda_ e _Lisboa_ sendo que as observações realizadas pela câmara da _Alameda_ são espaçadas de cerca de 5 segundos.
+
+### 2.3. _track_
+
+Esta operação vai ser testada utilizando o comando _spot_ com um identificador.
+
+2.3.1. Teste com uma pessoa inexistente no sistema (deve devolver vazio):
+
+```
+> spot person 1010101010
+```
+
+2.3.2. Teste com uma pessoa:
+
+```
 > spot person 123
-person,123,2020-04-03T10:10:31,Taguspark,-50.0,50.0
-> clear
-> [ctrl-d]
+person,123,<timestamp>,Lisboa,32.737613,-15.303164
 ```
 
-### **track car**
-```sh
-$ eye localhost 8080 Taguspark -50 50 < input01.txt
-$ spotter localhost 8080
+2.3.3. Teste com um carro:
+
+```
 > spot car AABB77
-car,AABB77,2020-04-03T09:36:03,Taguspark,-50.0,50.0
-> clear
-> [ctrl-d]
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 ```
 
-### **trackMatch**
-```sh
-$ eye localhost 8080 Taguspark -50 50 < input04.txt
-$ spotter localhost 8080
+### 2.4. _trackMatch_
+
+Esta operação vai ser testada utilizando o comando _spot_ com um fragmento de identificador.
+
+2.4.1. Teste com uma pessoa (deve devolver vazio):
+
+```
+> spot person 101010*
+```
+
+2.4.2. Testes com uma pessoa:
+
+```
+> spot person 12*
+person,123,<timestamp>,Lisboa,32.737613,-15.303164
+
+> spot person *71
+person,171,<timestamp>,Tagus,38.737613,-9.303164
+
+> spot person 1*9
+person,189,<timestamp>,Lisboa,32.737613,-15.303164
+```
+
+2.4.3. Testes com duas ou mais pessoas:
+
+```
 > spot person 1*
-person,123,2020-04-03T09:58:57,Taguspark,-50.0,50.0
-person,189,2020-04-03T09:58:57,Taguspark,-50.0,50.0
-> clear
-> [ctrl-d]
+person,123,<timestamp>,Lisboa,32.737613,-15.303164
+person,171,<timestamp>,Tagus,38.737613,-9.303164
+person,189,<timestamp>,Lisboa,32.737613,-15.303164
 ```
 
-### **ping**
-```sh
-$ eye localhost 8080 Taguspark -50 50 < input07.txt
-$ spotter localhost 8080
-> ping
-Server is running
-> clear
-> [ctrl-d]
+2.4.4. Testes com um carro:
+
+```
+> spot car AAB*
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+
+> spot car *ABB77
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+
+> spot car AA*77
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 ```
 
-### **clear**
-```sh
-$ eye localhost 8080 Taguspark -50 50 < input01.txt
-$ spotter localhost 8080
-> spot car AABB77
-car,AABB77,2020-04-03T10:00:14,Taguspark,-50.0,50.0
-> clear
-> spot car AABB77
+2.4.5. Testes com dois ou mais carros:
 
-> [ctrl-d]
+```
+> spot car *77
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+car,BBBB77,<timestamp>,Tagus,38.737613,-9.303164
+
+> spot car *
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+car,BBBB77,<timestamp>,Tagus,38.737613,-9.303164
 ```
 
-### **trace**
-```sh
-$ eye localhost 8080 Taguspark -50 50 < input03.txt
-$ spotter localhost 8080
+### 2.5. _trace_
+
+Esta operação vai ser testada utilizando o comando _trail_ com um identificador.
+
+2.5.1. Teste com uma pessoa (deve devolver vazio):
+
+```
+> trail person 10101010
+```
+
+2.5.2. Teste com uma pessoa:
+
+```
 > trail person 123
-person,123,2020-04-03T10:01:43,Taguspark,-50.0,50.0
-person,123,2020-04-03T10:01:43,Taguspark,-50.0,50.0
-person,123,2020-04-03T10:01:43,Taguspark,-50.0,50.0
-> clear
-> [ctrl-d]
+person,123,<timestamp>,Lisboa,32.737613 -15.303164
+person,123,<timestamp>,Lisboa,32.737613 -15.303164
+person,123,<timestamp>,Alameda,30.303164,-10.737613
+person,123,<timestamp>,Alameda,30.303164,-10.737613
+person,123,<timestamp>,Alameda,30.303164 -10.737613
+person,123,<timestamp>,Tagus,38.737613,-9.303164
+
 ```
 
-### **invalid person id**
+2.5.3. Teste com um carro (deve devolver vazio):
+
 ```
-$ eye localhost 8080 Taguspark -50 50 < input05.txt
-Report failed: Person's id must be a number.
-$ spotter localhost 8080
-> clear
-> [ctrl-d]
+> trail car 12XD34
 ```
 
-### **invalid car plate**
+2.5.4. Teste com um carro:
+
 ```
-$ eye localhost 8080 Taguspark -50 50 < input06.txt
-Report failed: Plate has invalid formatting.
-$ spotter localhost 8080
-> clear
-> [ctrl-d]
+> trail car AABB77
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
 ```
 
-### **multiple eyes**
+# Guião de Demonstração (multi réplica) para a Segunda Entrega
+
+## 1. Preparação do Sistema
+
+Para testar a aplicação e todos os seus componentes, é necessário preparar um ambiente com dados para proceder à verificação dos testes.
+
+### 1.1. Compilar o Projeto
+
+Primeiramente, é necessário instalar as dependências necessárias para o _silo_ e os clientes (_eye_ e _spotter_) e compilar estes componentes.
+Para isso, basta ir à diretoria _root_ do projeto e correr o seguinte comando:
+
 ```
-$ eye localhost 8080 Taguspark -50 50 < input01.txt
-$ eye localhost 8080 Alameda -10 10 < input01.txt
-$ spotter localhost 8080
-> trail person 123
-person,123,2020-04-03T10:07:25,Alameda,-10.0,10.0
-person,123,2020-04-03T10:07:22,Taguspark,-50.0,50.0
-> clear
-> [ctrl-d]
+$ mvn clean install -DskipTests
 ```
+
+Com este comando já é possível analisar se o projeto compila na íntegra.
+
+### 1.2. _Silo_
+
+Para proceder aos testes, é preciso lançar execuções dos servidores _silo_.
+Para isso basta ir à diretoria _silo-server_ e executar:
+
+```
+$ mvn exec:java -Dinstance=<instance>
+```
+
+Este comando vai colocar o _silo_ no endereço _localhost_ e na porta _808\$(instance)_.
+Vamos então criar 2 réplicas de modo a realizar os testes. Para tal deve correr os seguintes comandos em 2 terminais distintos:
+
+```
+$ mvn exec:java -Dinstance=1
+```
+
+```
+$ mvn exec:java -Dinstance=2
+```
+
+### 1.3. _Eye_
+
+Vamos registar 1 câmara e as respetivas observações.
+Para isso basta ir à diretoria _eye_ e correr o seguinte comando:
+
+```
+$ eye localhost 2181 Tagus 38.737613 -9.303164 1 < ../demo/input01.txt
+```
+
+**Nota:** Para correr o script _eye_ é necessário fazer `mvn install` e adicionar ao _PATH_ ou utilizar diretamente os executáveis gerados na diretoria `target/appassembler/bin/`.
+
+Depois de executar o comando acima poderá verificar no terminal da instância 1 do servidor que foram executados 3 uptades. O primeiro relativo ao cam_join do eye e os outros 2 a 2 conjuntos de observações.
+Passados cerca de 30 segundos observará que o terminal da réplica 2 informa a chegada de 3 uptades através de mensagens gossip.
+
+### 1.4. _Spotter_
+
+Vamos abrir um spotter na réplica 2.
+Para isso basta ir à diretoria _spotter_ e correr o seguinte comando:
+
+```
+$ spotter localhost 2181 2
+```
+
+Agora ao correr os seguintes comandos:
+
+```
+> spot person 123
+person,123,<timestamp>,Tagus,38.737613,-9.303164
+> spot car AABB77
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+```
+
+Podemos observar que o eye registou a suas observações na réplica 1, e através de mensagens gossip a réplica 1 propagou esta informação até à réplica 2, como pode ser observado através dos comandos do spotter.
+
+Agora para verificar o funcionamento da cache do cliente vamos terminar o servidor 2. Para isso basta ir até ao terminal do mesmo e premir `ENTER`. Em seguida volta-se a executar o comando:
+
+```
+$ mvn exec:java -Dinstance=2
+```
+
+De modo a gerar uma nova execução do servidor mas esta perdeu toda a informação que tinha anteriormente o que nos vais permitir observar o funcionamento da cache.
+Para tal vamos correr no spotter os seguintes comandos (sem que sejam enviadas mensagens gossip com uptades, caso tal aconteca volte a terminar o servidor e correr os comandos):
+
+```
+> spot person 171
+
+> spot person 123
+person,123,<timestamp>,Tagus,38.737613,-9.303164
+> spot car AABB77
+car,AABB77,<timestamp>,Tagus,38.737613,-9.303164
+```
+
+Podemos observar que, como o 1º comando não foi previamente executado antes de o servidor ser terminado, o seu resultado não foi armazenado na cache. Mas o 2º e 3º comandos foram executados e a sua informação armazenada.
+
+Se agora esperar até haver a troca das mensagens gossip, o servidor 2 vai recuperar a informação que tinha perdido e ao executar de novo os comandos no spotter observamos que todos vão receber resposta.
+
+### 2. _Troca de réplica_
+
+Vamos agora demonstrar um cliente a trocar de réplica quando a réplica à qual este se encontrava ligada crasha. Para tal não pode ser especificada uma réplica na criação do cliente.
+
+Primeiro crie 2 réplicas, executando os seguintes comandos na diretoria _silo-server_ :
+
+```
+$ mvn exec:java -Dinstance=1
+```
+
+```
+$ mvn exec:java -Dinstance=2
+```
+
+Em seguida crie um eye sem especificar a réplica ao qual ele se liga:
+
+```
+$ eye localhost 2181 Tagus 38.737613 -9.303164
+```
+
+Poderá observar num dos terminais a execução de um update (que se refere a um _cam join_) - a réplica correspondente e esse terminal foi escolhida aleatoriamente entre as réplicas disponiveis.
+
+Execute alguns comandos de report, por exemplo:
+
+```
+person,123
+
+person,1234
+
+person,123
+
+person,123
+
+
+```
+
+Aguarde até que as gossip messages cheguem ao outro terminal (no terminal aparecerá uma mensagem: `Received update{UUID} from gossip`).
+
+Agora termine a execução do terminal referente à réplica a que o eye se conectou, este terminal
+tem mensagens do tipo `Received update{UUID}`. Repare que não são iguais ás mensagens presentes no outro terminal pois estas são do tipo `Received update{UUID} from gossip`.
+
+Para terminar a execução da réplica basta premir `ENTER` no terminal com as mensagens `Received update{UUID}`.
+
+Agora no eye realize os seguintes comandos:
+
+```
+person,123
+
+person,1234
+
+
+```
+
+Poderá observar que estes comandos estão a ser imediatamente processados pela réplica à qual o eye se conseguiu reconectar. Esta reconexão foi feita escolhendo aleatoriamente uma réplica disponível após verificar que a réplica à qual o eye se encontrava previamente ligado crashou. Sendo que só existia uma réplica disponível a reconexão foi feita com a réplica que não foi terminada.
