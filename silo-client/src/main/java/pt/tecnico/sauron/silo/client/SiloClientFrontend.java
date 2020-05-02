@@ -67,8 +67,12 @@ public class SiloClientFrontend {
     }
 
     private UpdateResponse update(UpdateRequest updateRequest) {
+        boolean repeated = false;
         while (true) {
             try {
+                if (repeated && !updateRequest.hasCamJoinRequest() && clientLogin != null)
+                    stub.update(clientLogin);
+
                 UpdateResponse updateResponse = stub.update(updateRequest);
 
                 timestamp.merge(new TimestampVector(updateResponse.getTimestampList()));
@@ -95,9 +99,7 @@ public class SiloClientFrontend {
                         channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
                         stub = SiloGrpc.newBlockingStub(channel);
 
-                        if (!updateRequest.hasCamJoinRequest() && clientLogin != null)
-                            stub.update(clientLogin);
-
+                        repeated = true;
                     } catch (ZKNamingException zke) {
                         throw e;
                     }
