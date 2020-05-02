@@ -39,10 +39,27 @@ Sistemas Distribuídos 2019-2020, segundo semestre
 
 ## Solução
 
-_(Figura da solução de tolerância a faltas)_
+![Solução](./solution.png)
 
-_(Breve explicação da solução, suportada pela figura anterior)_
+As réplicas 1 e 2 estão a correr em simultâneo.
+Existem dois clientes, X e Y.
 
+1. O cliente X envia updates para a réplica 1.
+    * O update A atualiza o timestamp da réplica para (1, 0).
+    * O update B atualiza o timestamp da réplica para (2, 0).
+2. A réplica 1 e 2 partilham *gossip messages*.
+    * A réplica 1 partilha os updates A e B com a réplica 2, juntamente com o seu timestamp.
+    * A réplica 2 não partilha nenhum update (porque a réplica 1 está atualizada), e envia o seu timestamp que agora
+    está atualizado. 
+3. A réplica 2 falha silenciosamente, e volta a estar ativa - completamente desatualizada.
+4. A réplica 1 não partilha nenhum update, porque o último timestamp da réplica 2 estava atualizado.
+5. A réplica 2 volta a estar atualizada.
+    * A réplica 2 não partilha nenhum update (porque não tem), e envia o seu timestamp desatualizado.
+    * A réplica 1 nota o timestamp desatualizado da réplica 2 e envia os updates em falta.
+6. O cliente Y faz um pedido à réplica 2.
+    * A réplica 2 responde ao pedido com os updates inicias do cliente X.
+    
+Desta maneira, o cliente X e Y comunicaram através de um sistema distribuído!
 
 ## Protocolo de replicação
 
